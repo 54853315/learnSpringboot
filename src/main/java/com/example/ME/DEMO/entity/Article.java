@@ -2,7 +2,7 @@
  * @Author: konakona konakona@crazyphper.com
  * @Date: 2022-05-06 15:31:16
  * @LastEditors: konakona konakona@crazyphper.com
- * @LastEditTime: 2022-05-12 13:58:59
+ * @LastEditTime: 2022-05-12 14:33:14
  * @FilePath: /learning-java-spring-boot/src/main/java/com/example/ME/DEMO/entity/Article.java
  * @Description: 
  * QQ:54583315 
@@ -82,7 +82,8 @@ public class Article implements Serializable {
 
     // 标识为逻辑删除字段
     @TableLogic
-    // @JsonIgnore
+    // 返回json不显示
+    @JsonIgnore
     // 查询时不显示
     @TableField(select = false)
     @Column(columnDefinition = "tinyint default 0", nullable = false)

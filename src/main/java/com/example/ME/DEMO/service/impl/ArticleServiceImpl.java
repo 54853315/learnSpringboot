@@ -1,11 +1,15 @@
 package com.example.ME.DEMO.service.impl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.persistence.EntityExistsException;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.ME.DEMO.controller.vo.ArticleBriefVO;
 import com.example.ME.DEMO.entity.Article;
 import com.example.ME.DEMO.mapper.ArticleMapper;
 import com.example.ME.DEMO.service.ArticleService;
@@ -19,6 +23,32 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Autowired
     private ArticleMapper articleMapper;
+
+    /**
+     * 返回所有文章的概要信息（包含：ID、标题、概要信息、作者）
+     * 
+     * @return List<ArticleBriefVO>
+     */
+    public List<ArticleBriefVO> allBrief() {
+        LambdaQueryWrapper<Article> articleWrapper = generateCommonBusinessLogicWrapper();
+        articleWrapper.select(Article::getId, Article::getTitle, Article::getBrief, Article::getAuthor);
+        // select中排除content和release_time2个字段，其他都返回
+        // articleWrapper.select(
+        // Article.class,
+        // info -> !info.getColumn().equals("content")
+        // &&
+        // !info.getColumn().equals("release_time"));
+        List<ArticleBriefVO> articleBrief = new ArrayList<ArticleBriefVO>();
+        list(articleWrapper).forEach(item -> {
+            ArticleBriefVO article = new ArticleBriefVO();
+            article.setId(item.getId());
+            article.setTitle(item.getTitle());
+            article.setBrief(item.getBrief());
+            article.setAuthor(item.getAuthor());
+            articleBrief.add(article);
+        });
+        return articleBrief;
+    }
 
     /**
      * 当没有传递分页参数时，使用重载方法的方式传入默认值，每页显示20条
@@ -35,7 +65,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      * 
      * @return LambdaQueryWrapper<Article>
      */
-    private LambdaQueryWrapper<Article> generateListWrapper() {
+    private LambdaQueryWrapper<Article> generateCommonBusinessLogicWrapper() {
         LambdaQueryWrapper<Article> articleWrapper = new LambdaQueryWrapper<Article>();
         articleWrapper.isNotNull(Article::getReleaseTime);
         return articleWrapper;
@@ -47,13 +77,14 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      * @return IPage<Article>
      */
     public IPage<Article> listWithPage(Integer currentPage, Integer pageSize) {
-        LambdaQueryWrapper<Article> articleWrapper = generateListWrapper();
+        LambdaQueryWrapper<Article> articleWrapper = generateCommonBusinessLogicWrapper();
         Page<Article> page = new Page<Article>(currentPage, pageSize);
         IPage<Article> selectPage = articleMapper.selectPage(page, articleWrapper);
         // IPage<Article> selectPage = articleMapper.selectWithPage(page,
         // articleWrapper); // NOTE 这里是使用自定义的分页接口
         return selectPage;
     }
+
     /**
      * 获取一个新闻并增加它的查看数
      * 而且使用了乐观锁 0.0 详见Article实体的@Version实体属性

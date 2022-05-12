@@ -1,17 +1,16 @@
 package com.example.ME.DEMO.controller;
 
 import java.util.List;
-
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.example.ME.DEMO.controller.vo.ArticleBriefVO;
 import com.example.ME.DEMO.entity.Article;
 import com.example.ME.DEMO.exception.ApiException;
 import com.example.ME.DEMO.response.CommonResponse;
 import com.example.ME.DEMO.service.impl.ArticleServiceImpl;
 
 import org.apache.ibatis.javassist.NotFoundException;
-import org.aspectj.bridge.IMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,6 +28,14 @@ public class ArticleController {
 
     /**
      * 抛出一个api异常，展示显示效果
+     * 
+     * @example:
+     *           {
+     *           "code": "422 UNPROCESSABLE_ENTITY",
+     *           "message": "haha",
+     *           "data": null,
+     *           "timestamp": "2022-05-12 12:38:32"
+     *           }
      */
     @GetMapping("/article/exception")
     public void throwExampleException() {
@@ -36,13 +43,25 @@ public class ArticleController {
     }
 
     /**
-     * @TODO 提炼精简信息要做啊！
-     *       返回所有文章的ID、标题
+     * 返回所有文章的概要信息
+     * 
+     * @example :
+     *          {
+     *          "code": "200 OK",
+     *          "message": "success",
+     *          "data": [{
+     *          "id": 2,
+     *          "title": "abc",
+     *          "author": "1",
+     *          "brief": "22"
+     *          }],
+     *          "timestamp": "2022-05-12 15:00:41"
+     *          }
      * @return List<Article>
      */
     @GetMapping("/articles/allBrief")
-    public List<Article> allBrief() {
-        return articleServiceImpl.list();
+    public CommonResponse<List<ArticleBriefVO>> allBrief() {
+        return CommonResponse.returnResult(articleServiceImpl.allBrief());
     }
 
     /**
