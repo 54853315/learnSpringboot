@@ -16,6 +16,7 @@ import com.example.ME.DEMO.service.ArticleService;
 import com.example.ME.constant.Query;
 
 import org.apache.ibatis.javassist.NotFoundException;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Autowired
     private ArticleMapper articleMapper;
+
+    @Autowired
+    private ModelMapper modelMapper;
 
     /**
      * 返回所有文章的概要信息（包含：ID、标题、概要信息、作者）
@@ -43,12 +47,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         // !info.getColumn().equals("release_time"));
         List<ArticleBriefVO> articleBrief = new ArrayList<ArticleBriefVO>();
         list(articleWrapper).forEach(item -> {
-            ArticleBriefVO article = new ArticleBriefVO();
-            article.setId(item.getId());
-            article.setTitle(item.getTitle());
-            article.setBrief(item.getBrief());
-            article.setAuthor(item.getAuthor());
-            articleBrief.add(article);
+            // 类型转换老写法
+            // ArticleBriefVO article = new ArticleBriefVO();
+            // article.setId(item.getId());
+            // article.setTitle(item.getTitle());
+            // article.setBrief(item.getBrief());
+            // article.setAuthor(item.getAuthor());
+            // articleBrief.add(article);
+            // 使用org.modelmapper做类型转换
+            modelMapper.map(item, ArticleBriefVO.class);
         });
         return articleBrief;
     }
@@ -83,14 +90,14 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         LambdaQueryWrapper<Article> articleWrapper = generateCommonBusinessLogicWrapper();
         Page<Article> page = new Page<Article>(currentPage, pageSize);
         IPage<Article> selectPage = articleMapper.selectPage(page, articleWrapper);
-        // IPage<Article> selectPage = articleMapper.selectWithPage(page,
-        // articleWrapper); // NOTE 这里是使用自定义的分页接口
+        // NOTE 这里是使用自定义的分页接口
+        // IPage<Article> selectPage =
+        // articleMapper.selectWithPage(page,articleWrapper);
         return selectPage;
     }
 
     /**
      * 获取一个新闻并增加它的查看数
-     * 而且使用了乐观锁 0.0 详见Article实体的@Version实体属性
      * 
      * @return Article
      */

@@ -2,7 +2,7 @@
  * @Author: konakona konakona@crazyphper.com
  * @Date: 2022-05-06 15:31:16
  * @LastEditors: konakona konakona@crazyphper.com
- * @LastEditTime: 2022-05-12 15:44:49
+ * @LastEditTime: 2022-05-12 16:55:42
  * @FilePath: /learning-java-spring-boot/src/main/java/com/example/ME/DEMO/entity/Article.java
  * @Description: 
  * QQ:54583315 
@@ -60,7 +60,6 @@ public class Article implements Serializable {
     private String content;
 
     @Column(columnDefinition = "int default 0", nullable = false)
-    @Version // 乐观锁注解
     private Integer viewCount;
 
     @NonNull
