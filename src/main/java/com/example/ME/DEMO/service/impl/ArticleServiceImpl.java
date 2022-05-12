@@ -13,10 +13,13 @@ import com.example.ME.DEMO.controller.vo.ArticleBriefVO;
 import com.example.ME.DEMO.entity.Article;
 import com.example.ME.DEMO.mapper.ArticleMapper;
 import com.example.ME.DEMO.service.ArticleService;
+import com.example.ME.constant.Query;
 
 import org.apache.ibatis.javassist.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import lombok.NonNull;
 
 @Service
 public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> implements ArticleService {
@@ -57,7 +60,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      * @return
      */
     public IPage<Article> listWithPage() {
-        return listWithPage(1, 15);
+        return listWithPage(Query.getDefaultPage2Int(), Query.getDefaultPageSize2Int());
     }
 
     /**
@@ -76,7 +79,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      * 
      * @return IPage<Article>
      */
-    public IPage<Article> listWithPage(Integer currentPage, Integer pageSize) {
+    public IPage<Article> listWithPage(@NonNull Integer currentPage, @NonNull Integer pageSize) {
         LambdaQueryWrapper<Article> articleWrapper = generateCommonBusinessLogicWrapper();
         Page<Article> page = new Page<Article>(currentPage, pageSize);
         IPage<Article> selectPage = articleMapper.selectPage(page, articleWrapper);

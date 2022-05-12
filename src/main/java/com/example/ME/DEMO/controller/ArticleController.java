@@ -9,6 +9,7 @@ import com.example.ME.DEMO.entity.Article;
 import com.example.ME.DEMO.exception.ApiException;
 import com.example.ME.DEMO.response.CommonResponse;
 import com.example.ME.DEMO.service.impl.ArticleServiceImpl;
+import com.example.ME.constant.Query;
 
 import org.apache.ibatis.javassist.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 // 整个Article功能都是基于springboot+mybatis plus + hibernate实现
 
@@ -67,15 +69,18 @@ public class ArticleController {
     /**
      * 查看文章列表
      * 
-     * @return IPage<Article>
+     * @return CommonResponse<IPage<Article>>
      */
     @GetMapping("/articles")
-    public CommonResponse<IPage<Article>> list() {
+    public CommonResponse<IPage<Article>> list(
+            @RequestParam(value = "page", required = false, defaultValue = Query.DEFAULT_PAGE) Integer page,
+            @RequestParam(value = "per_page", required = false, defaultValue = Query.DEFAULT_PAGE_SIZE) Integer perPage) {
         // NOTE 使用MP封装的翻页查询返回返回数据
-        IPage<Article> result = articleServiceImpl.page(new Page<Article>(1, 15),
-                new LambdaQueryWrapper<Article>().isNotNull(Article::getReleaseTime));
+        // IPage<Article> result = articleServiceImpl.page(new Page<Article>(page,
+        // perPage),
+        // new LambdaQueryWrapper<Article>().isNotNull(Article::getReleaseTime));
         // NOTE 使用自己封装的有状态的service返回分页数据，跟上面效果是一样的
-        // return articleServiceImpl.listWithPage();
+        IPage<Article> result = articleServiceImpl.listWithPage(page, perPage);
         return CommonResponse.returnResult(result);
     }
 
