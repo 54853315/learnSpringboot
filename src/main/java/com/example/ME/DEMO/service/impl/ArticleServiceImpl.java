@@ -2,7 +2,7 @@
  * @Author: konakona konakona@crazyphper.com
  * @Date: 2022-05-06 15:35:53
  * @LastEditors: konakona konakona@crazyphper.com
- * @LastEditTime: 2022-05-15 17:07:40
+ * @LastEditTime: 2022-05-15 17:19:08
  * @Description: 
  * 
  * Copyright (c) 2022 by konakona konakona@crazyphper.com, All Rights Reserved. 
@@ -30,6 +30,7 @@ import com.example.ME.util.DateAdopter;
 import org.apache.ibatis.javassist.NotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -138,7 +139,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      * @return boolean
      * @throws Article
      */
-    @CachePut(value = "article", key = "#id", condition = "#result.id !=null")
+    @CachePut(value = "article", key = "#id", condition = "#result.releaseTime !=null")
+    @CacheEvict(value = "article", key = "#id", condition = "#result.releaseTime == null")
     public Article updateArticle(Long id, ArticleBodyDto requestBody) throws Exception {
         Article article = getById(id);
         if (article == null) {
@@ -193,6 +195,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      * @return Article
      * @throws EntityExistsException
      */
+    @CachePut(value = "article", key = "#result.id", condition = "#result.releaseTime !=null")
     public Article insertArticle(ArticleBodyDto requestBody) throws EntityExistsException {
         checkTitleRepeat(requestBody.getTitle());
         Article article = new Article();
