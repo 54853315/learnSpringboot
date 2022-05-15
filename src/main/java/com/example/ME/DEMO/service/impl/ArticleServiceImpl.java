@@ -1,3 +1,12 @@
+/*
+ * @Author: konakona konakona@crazyphper.com
+ * @Date: 2022-05-06 15:35:53
+ * @LastEditors: konakona konakona@crazyphper.com
+ * @LastEditTime: 2022-05-15 17:07:40
+ * @Description: 
+ * 
+ * Copyright (c) 2022 by konakona konakona@crazyphper.com, All Rights Reserved. 
+ */
 package com.example.ME.DEMO.service.impl;
 
 import java.util.ArrayList;
@@ -11,13 +20,18 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.ME.DEMO.controller.vo.ArticleBriefVO;
 import com.example.ME.DEMO.entity.Article;
+import com.example.ME.DEMO.exception.ApiException;
 import com.example.ME.DEMO.mapper.ArticleMapper;
 import com.example.ME.DEMO.service.ArticleService;
 import com.example.ME.constant.Query;
+import com.example.ME.request.ArticleBodyDto;
+import com.example.ME.util.DateAdopter;
 
 import org.apache.ibatis.javassist.NotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import lombok.NonNull;
@@ -36,6 +50,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      * 
      * @return List<ArticleBriefVO>
      */
+    @Cacheable(value = "article:allBrief")
     public List<ArticleBriefVO> allBrief() {
         LambdaQueryWrapper<Article> articleWrapper = generateCommonBusinessLogicWrapper();
         articleWrapper.select(Article::getId, Article::getTitle, Article::getBrief, Article::getAuthor);
@@ -87,6 +102,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      * 
      * @return IPage<Article>
      */
+    @Cacheable(value = "article:list")
     public IPage<Article> listWithPage(@NonNull Integer currentPage, @NonNull Integer pageSize) {
         LambdaQueryWrapper<Article> articleWrapper = generateCommonBusinessLogicWrapper();
         Page<Article> page = new Page<Article>(currentPage, pageSize);
@@ -103,6 +119,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      * @return Article
      */
     @Override
+    @Cacheable(value = "article", key = "#id", condition = "#id != null")
     public Article increaseViewCountAndGet(Long id) throws NotFoundException {
         Article article = articleMapper.selectById(id);
         if (article == null) {
@@ -119,22 +136,25 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      * @param id
      * @param requestBody
      * @return boolean
-     * @throws Exception
+     * @throws Article
      */
-    public boolean updateArticle(Long id, Article requestBody) throws Exception {
+    @CachePut(value = "article", key = "#id", condition = "#result.id !=null")
+    public Article updateArticle(Long id, ArticleBodyDto requestBody) throws Exception {
         Article article = getById(id);
         if (article == null) {
             throw new NotFoundException("找不到文章啦");
         }
-        System.out.println("文章内容：" + article);
         // 标题唯一性检测 TODO 希望能够复用，封装为一个内部方法在java里不算真正的可复用，我感觉得写个自定义注解给到Entity使用
         checkTitleRepeat(requestBody.getTitle(), id);
         article.setTitle(requestBody.getTitle());
         article.setContent(requestBody.getContent());
-        article.setReleaseTime(requestBody.getReleaseTime());
+        article.setReleaseTime(DateAdopter.str2LoclaDateTime(requestBody.getReleaseTime()));
         article.setBrief(requestBody.getBrief());
         article.setAuthor(requestBody.getAuthor());
-        return updateById(article);
+        if (updateById(article) == false) {
+            throw new ApiException("更新文章失败");
+        }
+        return article;
     }
 
     /**
@@ -170,17 +190,21 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      * 新增文章
      * 
      * @param requestBody
-     * @return boolean
+     * @return Article
      * @throws EntityExistsException
      */
-    public boolean insertArticle(Article requestBody) throws EntityExistsException {
+    public Article insertArticle(ArticleBodyDto requestBody) throws EntityExistsException {
         checkTitleRepeat(requestBody.getTitle());
         Article article = new Article();
         article.setTitle(requestBody.getTitle());
         article.setContent(requestBody.getContent());
-        article.setReleaseTime(requestBody.getReleaseTime());
+        article.setReleaseTime(DateAdopter.str2LoclaDateTime(requestBody.getReleaseTime()));
         article.setBrief(requestBody.getBrief());
         article.setAuthor(requestBody.getAuthor());
-        return save(article);
+        if (save(article) == false) {
+            throw new ApiException("新增文章失败");
+        }
+        return article;
     }
+
 }

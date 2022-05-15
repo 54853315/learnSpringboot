@@ -12,6 +12,7 @@ import com.example.ME.request.ArticleBodyDto;
 
 import org.apache.ibatis.javassist.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -113,11 +114,8 @@ public class ArticleController {
      * @throws Exception
      */
     @PostMapping("/article")
-    public CommonResponse<String> store(@RequestBody ArticleBodyDto requestBody) throws Exception {
-        if (articleServiceImpl.insertArticle(requestBody)) {
-            return CommonResponse.success();
-        }
-        return CommonResponse.fail(HttpStatus.UNPROCESSABLE_ENTITY.toString(), "保存失败");
+    public CommonResponse<Article> store(@RequestBody ArticleBodyDto requestBody) throws Exception {
+        return CommonResponse.returnResult(articleServiceImpl.insertArticle(requestBody));
     }
 
     /**
@@ -127,30 +125,30 @@ public class ArticleController {
      * @throws Exception
      */
     @PutMapping("/article/{id}")
-    public CommonResponse<String> update(@PathVariable("id") Long id, @RequestBody ArticleBodyDto requestBody)
+    public CommonResponse<Article> update(@PathVariable("id") Long id, @RequestBody ArticleBodyDto requestBody)
             throws Exception {
-        if (articleServiceImpl.updateArticle(id, requestBody)) {
-            return CommonResponse.success();
-        }
-        return CommonResponse.fail(HttpStatus.UNPROCESSABLE_ENTITY.toString(), "更新失败");
-
+        return CommonResponse.returnResult(articleServiceImpl.updateArticle(id, requestBody));
     }
 
     /**
      * 通过Id删除(逻辑软删除)一个文章
      * 目前由于框架设计者主张逻辑删除不应被物理删除，因此无法实现物理删除
-     * 因此，若业务需要逻辑删除可以被物理删除，则需要自己实现（见ArticleMapper->forceDeleteById）
+     * 若业务需要逻辑删除可以被物理删除，则需要自己实现（见ArticleMapper->forceDeleteById）
      * issue：（请愿太多了）
-     * via: https://github.com/baomidou/mybatis-plus/blob/a3e121c27cd26cb7c546dfb88190f3b1f574dc38/mybatis-plus-core/src/main/java/com/baomidou/mybatisplus/core/injector/methods/DeleteById.java
+     * via:
+     * https://github.com/baomidou/mybatis-plus/blob/a3e121c27cd26cb7c546dfb88190f3b1f574dc38/mybatis-plus-core/src/main/java/com/baomidou/mybatisplus/core/injector/methods/DeleteById.java
+     * 
      * @param id
      * @return boolean
      */
     @DeleteMapping("/article/{id}")
+    @CacheEvict(value = "article", key = "#id", beforeInvocation = true)
     public CommonResponse<String> delete(@PathVariable("id") Long id) {
         if (articleServiceImpl.removeById(id)) {
             return CommonResponse.success();
         } else {
-            return CommonResponse.fail(HttpStatus.UNPROCESSABLE_ENTITY.toString(), "删除失败");
+            return CommonResponse.fail(HttpStatus.UNPROCESSABLE_ENTITY.toString(),
+                    "删除失败");
         }
     }
 }
