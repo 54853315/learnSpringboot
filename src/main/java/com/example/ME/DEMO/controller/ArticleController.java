@@ -1,18 +1,18 @@
 package com.example.ME.DEMO.controller;
 
 import java.util.List;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.ME.DEMO.controller.vo.ArticleBriefVO;
 import com.example.ME.DEMO.entity.Article;
 import com.example.ME.DEMO.exception.ApiException;
 import com.example.ME.DEMO.response.CommonResponse;
 import com.example.ME.DEMO.service.impl.ArticleServiceImpl;
 import com.example.ME.constant.Query;
+import com.example.ME.request.ArticleBodyDto;
 
 import org.apache.ibatis.javassist.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -100,17 +100,24 @@ public class ArticleController {
     /**
      * 新增一个文章
      * 
+     * @example :
+     *          curl --location --request POST 'http://localhost:8080/article' \
+     *          --header 'Content-Type: application/json' \
+     *          --data-raw '{
+     *          "title": "各工构毛派",
+     *          "author": "nulla",
+     *          "brief": "labore culpa deserunt anim dolor",
+     *          "release_time": "2002-06-17 23:00:13"
+     *          }'
      * @param requestBody
      * @throws Exception
      */
     @PostMapping("/article")
-    public CommonResponse<String> store(@RequestBody Article requestBody) throws Exception {
-        System.out.println(requestBody);
+    public CommonResponse<String> store(@RequestBody ArticleBodyDto requestBody) throws Exception {
         if (articleServiceImpl.insertArticle(requestBody)) {
             return CommonResponse.success();
         }
-        System.out.println("到不了这一步吧？");
-        return CommonResponse.fail("保存失败");
+        return CommonResponse.fail(HttpStatus.UNPROCESSABLE_ENTITY.toString(), "保存失败");
     }
 
     /**
@@ -120,24 +127,30 @@ public class ArticleController {
      * @throws Exception
      */
     @PutMapping("/article/{id}")
-    public CommonResponse<String> update(@PathVariable("id") Long id, @RequestBody Article requestBody)
+    public CommonResponse<String> update(@PathVariable("id") Long id, @RequestBody ArticleBodyDto requestBody)
             throws Exception {
-        System.out.println(requestBody);
         if (articleServiceImpl.updateArticle(id, requestBody)) {
-
+            return CommonResponse.success();
         }
-        return CommonResponse.success();
+        return CommonResponse.fail(HttpStatus.UNPROCESSABLE_ENTITY.toString(), "更新失败");
+
     }
 
     /**
-     * 通过Id删除一个文章
-     * 
+     * 通过Id删除(逻辑软删除)一个文章
+     * 目前由于框架设计者主张逻辑删除不应被物理删除，因此无法实现物理删除
+     * 因此，若业务需要逻辑删除可以被物理删除，则需要自己实现（见ArticleMapper->forceDeleteById）
+     * issue：（请愿太多了）
+     * via: https://github.com/baomidou/mybatis-plus/blob/a3e121c27cd26cb7c546dfb88190f3b1f574dc38/mybatis-plus-core/src/main/java/com/baomidou/mybatisplus/core/injector/methods/DeleteById.java
      * @param id
      * @return boolean
      */
     @DeleteMapping("/article/{id}")
     public CommonResponse<String> delete(@PathVariable("id") Long id) {
-        articleServiceImpl.removeById(id);
-        return CommonResponse.success();
+        if (articleServiceImpl.removeById(id)) {
+            return CommonResponse.success();
+        } else {
+            return CommonResponse.fail(HttpStatus.UNPROCESSABLE_ENTITY.toString(), "删除失败");
+        }
     }
 }

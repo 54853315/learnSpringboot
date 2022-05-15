@@ -1,10 +1,15 @@
+/*
+ * @Author: konakona konakona@crazyphper.com
+ * @Date: 2022-05-11 15:06:24
+ * @LastEditors: konakona konakona@crazyphper.com
+ * @LastEditTime: 2022-05-12 17:40:25
+ * @Description: 
+ * 
+ * Copyright (c) 2022 by konakona konakona@crazyphper.com, All Rights Reserved. 
+ */
 package com.example.ME.DEMO.response;
 
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.util.Date;
-
-import org.aspectj.bridge.IMessage;
+import com.example.ME.util.DateAdopter;
 import org.springframework.http.HttpStatus;
 
 import lombok.Data;
@@ -21,25 +26,25 @@ public class CommonResponse<T> {
 
     public CommonResponse(String message) {
         this.setMessage(message);
-        this.setTimestamp(long2TimeStr());
+        this.setTimestamp(DateAdopter.long2TimeStr());
     }
 
     public CommonResponse(T data) {
         this.setData(data);
-        this.setTimestamp(long2TimeStr());
+        this.setTimestamp(DateAdopter.long2TimeStr());
     }
 
     public CommonResponse(String code, String message) {
         this.setCode(code);
         this.setMessage(message);
-        this.setTimestamp(long2TimeStr());
+        this.setTimestamp(DateAdopter.long2TimeStr());
     }
 
     public CommonResponse(String code, String message, T data) {
         this.setCode(code);
         this.setMessage(message);
         this.setData(data);
-        this.setTimestamp(long2TimeStr());
+        this.setTimestamp(DateAdopter.long2TimeStr());
     }
 
     /**
@@ -52,13 +57,13 @@ public class CommonResponse<T> {
      */
     public static <T> CommonResponse<T> success(String code, String message) {
         CommonResponse<T> r = new CommonResponse<T>(code, message);
-        r.setTimestamp(long2TimeStr());
+        r.setTimestamp(DateAdopter.long2TimeStr());
         return r;
     }
 
     public static <T> CommonResponse<T> fail(String code, String message) {
         CommonResponse<T> r = new CommonResponse<T>(code, message);
-        r.setTimestamp(long2TimeStr());
+        r.setTimestamp(DateAdopter.long2TimeStr());
         return r;
     }
 
@@ -82,10 +87,5 @@ public class CommonResponse<T> {
         CommonResponse<T> result = new CommonResponse<>(HttpStatus.OK.toString(), "success");
         result.setData(data);
         return result;
-    }
-
-    private static String long2TimeStr() {
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        return df.format(new Date());
     }
 }

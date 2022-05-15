@@ -54,8 +54,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             // article.setBrief(item.getBrief());
             // article.setAuthor(item.getAuthor());
             // articleBrief.add(article);
+
             // 使用org.modelmapper做类型转换
-            modelMapper.map(item, ArticleBriefVO.class);
+            articleBrief.add(modelMapper.map(item, ArticleBriefVO.class));
         });
         return articleBrief;
     }
