@@ -13,6 +13,22 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>DEMO</name>
 	<description>Demo project for Spring Boot</description>
+	<!-- 环境描述 -->
+	<profiles>
+		<profile>
+		<id>dev</id>
+		<properties>
+		<spring.profiles.active>dev</spring.profiles.active>
+		</properties>
+		<activation>true</activation>
+		</profile>
+		<profile>
+		<id>prod</id>
+		<properties>
+		<spring.profiles.active>prod</spring.profiles.active>
+		</properties>
+		</profile>
+	</profiles>
 	<properties>
 		<java.version>11</java.version>
 	</properties>
@@ -31,6 +47,11 @@
 		<dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+
+		<dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
 		<dependency>
