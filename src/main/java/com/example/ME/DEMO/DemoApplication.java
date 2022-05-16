@@ -2,7 +2,7 @@
  * @Author: konakona konakona@crazyphper.com
  * @Date: 2022-05-05 06:41:04
  * @LastEditors: konakona konakona@crazyphper.com
- * @LastEditTime: 2022-05-15 13:11:01
+ * @LastEditTime: 2022-05-16 18:34:44
  * 
  * Copyright (c) 2022 by konakona konakona@crazyphper.com, All Rights Reserved. 
  */
@@ -12,6 +12,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,7 +27,10 @@ public class DemoApplication {
 	}
 
 	public static void main(String[] args) {
-		SpringApplication.run(DemoApplication.class, args);
+		// 启动Springboot的应用，返回一个Spring的IOC容器
+		ConfigurableApplicationContext context = SpringApplication.run(DemoApplication.class, args);
+		// Object redisTemplate = context.getBean("x");
+		// System.out.println("-----" + redisTemplate);
 	}
 
 }
