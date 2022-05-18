@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pers.learn.blog.mapper.ArticleCommentMapper">
+    <resultMap id="ResultMapWhitConditionPage" type="pers.learn.blog.mapper.vo.ArticleCommentVo">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="articleId" column="article_id" jdbcType="INTEGER"/>
+        <result property="name" column="name" jdbcType="VARCHAR"/>
+        <result property="content" column="content" jdbcType="VARCHAR"/>
+        <association property="article" javaType="java.util.HashMap">
+            <result property="id" column="id" jdbcType="INTEGER"/>
+            <result property="brief" column="brief" jdbcType="VARCHAR"/>
+            <result property="title" column="title" jdbcType="VARCHAR"/>
+            <result property="author" column="author" jdbcType="VARCHAR"/>
+            <result property="viewCount" column="view_count" jdbcType="INTEGER"/>
+        </association>
+    </resultMap>
+    <select id="selectPageWhitCondition" resultMap="ResultMapWhitConditionPage">
+        select a.title,a.author,a.view_count,a.brief,c.* from article AS a RIGHT JOIN article_comment AS c 
+        ON a.id = c.article_id 
+        ${ew.customSqlSegment} 
+        and a.release_time IS NOT NULL 
+        and a.deleted = 0
+    </select>
+</mapper>
