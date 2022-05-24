@@ -17,6 +17,9 @@ import pers.learn.blog.service.impl.ArticleCommentServiceImpl;
 import pers.learn.blog.service.impl.ArticleServiceImpl;
 
 import org.apache.ibatis.javassist.NotFoundException;
+import org.apache.shiro.authz.annotation.Logical;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.apache.shiro.authz.annotation.RequiresRoles;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpStatus;
@@ -74,13 +77,11 @@ public class ArticleController {
      *          }
      * @return List<Article>
      */
-    @GetMapping("/articles/allBrief")
+    @GetMapping("/article/allBrief")
+    @RequiresRoles("admin")
+    @RequiresPermissions("article:all")
     public CommonResponse<List<ArticleBriefVO>> allBrief() {
         return CommonResponse.returnResult(articleServiceImpl.allBrief());
-    }
-
-    public void test() {
-        articleServiceImpl.allBrief();
     }
 
     /**
@@ -89,6 +90,7 @@ public class ArticleController {
      * @return CommonResponse<IPage<Article>>
      */
     @GetMapping("/articles")
+    @RequiresPermissions("article:list")
     public CommonResponse<IPage<Article>> list(
             @RequestParam(value = "page", required = false, defaultValue = Query.DEFAULT_PAGE) Integer page,
             @RequestParam(value = "per_page", required = false, defaultValue = Query.DEFAULT_PAGE_SIZE) Integer perPage) {
@@ -158,6 +160,8 @@ public class ArticleController {
      * @return boolean
      */
     @DeleteMapping("/article/{id}")
+    @RequiresRoles("admin")
+    @RequiresPermissions(value = {"article_del","article:delete"},logical = Logical.OR)
     @CacheEvict(value = "article", key = "#id", beforeInvocation = true)
     public CommonResponse<String> delete(@PathVariable("id") Long id) {
         if (articleServiceImpl.removeById(id)) {

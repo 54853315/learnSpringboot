@@ -48,24 +48,36 @@ public class ShiroConfiguration {
 
         // 必须设置 SecurityManager
         shiroFilterFactoryBean.setSecurityManager(securityManager);
+        shiroFilterFactoryBean.setFilterChainDefinitionMap(getFilterChainDefinitionMap());
+        // 设置登录接口
+        shiroFilterFactoryBean.setLoginUrl("/admin/auth/login");
+        // shiroFilterFactoryBean.setSuccessUrl("/admin/auth/info");
+        // 未授权界面
+        shiroFilterFactoryBean.setUnauthorizedUrl("/admin/auth/unauthorized");
+        Map<String, Filter> filters = new HashMap<String, Filter>();
+        shiroFilterFactoryBean.setFilters(filters);
 
-        // 拦截器
-        Map<String, String> filterChainDefinitionMap = new LinkedHashMap<String,
-        String>();
+        return shiroFilterFactoryBean;
+    }
+
+    // 拦截器配置
+    public LinkedHashMap<String, String> getFilterChainDefinitionMap() {
+        LinkedHashMap<String, String> filterChainDefinitionMap = new LinkedHashMap<String, String>();
+        // authc:所有url都必须认证通过才可以访问; anon:所有url都都可以匿名访问
+
         // 配置静态资源允许访问
         filterChainDefinitionMap.put("/js/**", "anon");
         filterChainDefinitionMap.put("/css/**", "anon");
-        filterChainDefinitionMap.put("/index", "anon");
-        // <!-- authc:所有url都必须认证通过才可以访问; anon:所有url都都可以匿名访问-->
+
+        // filterChainDefinitionMap.put("/article/**", "roles[admin],perms[article:*]");    // 可以在这里写perms权限要求，但没必要
+        filterChainDefinitionMap.put("/article/**", "authc");
+        // 其他资源都需要授权才能访问
         filterChainDefinitionMap.put("/**", "authc");
-        // 如果不设置默认会自动寻找Web工程根目录下的"/login.jsp"页面
-        shiroFilterFactoryBean.setLoginUrl("/backend/login");
-        // 未授权界面;
-        shiroFilterFactoryBean.setUnauthorizedUrl("/403");
-        Map<String, Filter> filters = new HashMap<String, Filter>();
-        shiroFilterFactoryBean.setFilters(filters);
-        shiroFilterFactoryBean.setFilterChainDefinitionMap(filterChainDefinitionMap);
-        return shiroFilterFactoryBean;
+        // 一些公共接口允许访问
+        filterChainDefinitionMap.put("/guest/**", "anon");
+        filterChainDefinitionMap.put("/admin/auth/unauthorized", "anon");
+        filterChainDefinitionMap.put("/admin/auth/login", "anon");
+        return filterChainDefinitionMap;
     }
 
     /**

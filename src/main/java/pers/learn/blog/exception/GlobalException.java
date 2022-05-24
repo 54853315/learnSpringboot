@@ -2,7 +2,7 @@
  * @Author: konakona konakona@crazyphper.com
  * @Date: 2022-05-05 16:01:13
  * @LastEditors: konakona konakona@crazyphper.com
- * @LastEditTime: 2022-05-23 13:49:22
+ * @LastEditTime: 2022-05-24 10:36:05
  * @Description: 
  * 
  * Copyright (c) 2022 by konakona konakona@crazyphper.com, All Rights Reserved. 
@@ -12,6 +12,7 @@ package pers.learn.blog.exception;
 import pers.learn.blog.response.CommonResponse;
 
 import org.apache.ibatis.javassist.NotFoundException;
+import org.apache.shiro.authz.UnauthorizedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -45,6 +46,11 @@ public class GlobalException {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public CommonResponse<Object> httpMessageNotReadableException(HttpMessageNotReadableException e) {
         return CommonResponse.fail("request body不能为空");
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public CommonResponse<String> UnauthorizedException(UnauthorizedException e) {
+        return CommonResponse.fail("您没有权限访问");
     }
 
     /**
