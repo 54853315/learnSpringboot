@@ -2,7 +2,7 @@
  * @Author: konakona konakona@crazyphper.com
  * @Date: 2022-05-05 16:01:13
  * @LastEditors: konakona konakona@crazyphper.com
- * @LastEditTime: 2022-05-25 15:08:01
+ * @LastEditTime: 2022-05-25 15:43:30
  * @Description: 全局异常处理器
  * 
  * Copyright (c) 2022 by konakona konakona@crazyphper.com, All Rights Reserved. 
@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
-public class GlobalException {
+public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalException.class);
 
@@ -36,10 +36,7 @@ public class GlobalException {
     @ExceptionHandler(RuntimeException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public CommonResponse<String> runtimeException(Exception e) {
-        String stackTrack = e.getStackTrace().length > 0 ? e.getStackTrace()[0].toString() : "";
-        String errorMsg = "异常来自：" + e.getClass() + " \n 错误原因：" + e.toString() + "\nStrack:"
-                + stackTrack;
-        logger.error(errorMsg, e);
+        logger.error(e.getMessage(), e);
         return CommonResponse.fail(e.getMessage());
     }
 
@@ -50,7 +47,7 @@ public class GlobalException {
     }
 
     // 当用户访问需要RequestBody的资源却没有携带时，统一返回这条
-    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ExceptionHandler(value = { HttpMessageNotReadableException.class })
     public CommonResponse<Object> httpMessageNotReadableException(HttpMessageNotReadableException e) {
         return CommonResponse.fail("request body不能为空");
     }
