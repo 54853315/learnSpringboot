@@ -22,6 +22,12 @@ logging:
     pers.learn: debug
     org.springframework: warn
 
+#Shiro
+shiro:
+  session:
+    # 同步session到数据库的周期（默认1分钟）
+    dbSyncPeriod: 1
+
 mybatis:
   configuration:
     map-underscore-to-camel-case: true

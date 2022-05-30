@@ -27,6 +27,9 @@ import org.springframework.context.annotation.Configuration;
 import io.netty.handler.codec.base64.Base64;
 import pers.learn.framework.shiro.realm.BackendUserRealm;
 import pers.learn.framework.shiro.realm.UserRealm;
+import pers.learn.framework.shiro.session.DbSessionDAO;
+import pers.learn.framework.shiro.web.filter.online.DbSessionFilter;
+import pers.learn.framework.shiro.web.filter.sync.SyncDbSessionFilter;
 
 @Configuration
 public class ShiroConfiguration {
@@ -73,6 +76,8 @@ public class ShiroConfiguration {
         // 未授权界面
         shiroFilterFactoryBean.setUnauthorizedUrl("/admin/auth/unauthorized");
         Map<String, Filter> filters = new HashMap<String, Filter>();
+        filters.put("syncDbSession", syncDbSessionFilter());
+        filters.put("dbSession", dbSessionFilter());
         shiroFilterFactoryBean.setFilters(filters);
 
         return shiroFilterFactoryBean;
@@ -90,18 +95,20 @@ public class ShiroConfiguration {
         // filterChainDefinitionMap.put("/article/**", "roles[admin],perms[article:*]");
         // // 可以在这里写perms权限要求，但没必要
         filterChainDefinitionMap.put("/article/**", "authc");
-        // 其他资源都需要授权才能访问
-        filterChainDefinitionMap.put("/**", "authc");
         // 一些公共接口允许访问
         filterChainDefinitionMap.put("/guest/**", "anon");
         filterChainDefinitionMap.put("/admin/auth/unauthorized", "anon");
         filterChainDefinitionMap.put("/admin/auth/login", "anon");
+        // 其他资源都需要授权才能访问
+//        filterChainDefinitionMap.put("/**", "authc");
+        filterChainDefinitionMap.put("/**", "user,dbSession,syncDbSession");
+
         return filterChainDefinitionMap;
     }
 
     /**
      * 配置org.apache.shiro.web.session.mgt.DefaultWebSessionManager
-     * 
+     *
      * @return
      */
     @Bean
@@ -111,6 +118,7 @@ public class ShiroConfiguration {
         // manager.setSessionDAO(getMemorySessionDAO());
         // 自定义SessionDao
         manager.setSessionDAO(getSessionDAO());
+        manager.setCacheManager(getEhCacheManager());
         // System.out.println("dao:" + defaultWebSessionManager.getSessionDAO());
         // 删除过期的session
         manager.setDeleteInvalidSessions(true);
@@ -124,24 +132,44 @@ public class ShiroConfiguration {
         return manager;
     }
 
-    public EnterpriseCacheSessionDAO getSessionDAO() {
-        EnterpriseCacheSessionDAO enterpriseCacheSessionDAO = new EnterpriseCacheSessionDAO();
-        enterpriseCacheSessionDAO.setCacheManager(getEhCacheManager());
-        return enterpriseCacheSessionDAO;
+    /**
+     * 自定义在线用户同步过滤器
+     */
+    public SyncDbSessionFilter syncDbSessionFilter() {
+        SyncDbSessionFilter syncDbSessionFilter = new SyncDbSessionFilter();
+        syncDbSessionFilter.setDbSessionDAO(getSessionDAO());
+        return syncDbSessionFilter;
+    }
+
+    /**
+     * 自定义在线用户处理过滤器
+     */
+    public DbSessionFilter dbSessionFilter() {
+        DbSessionFilter dbSessionFilter = new DbSessionFilter();
+//        dbSessionFilter.setLoginUrl("/admin/auth/login");
+        dbSessionFilter.setDbSessionDAO(getSessionDAO());
+        return dbSessionFilter;
+    }
+
+    @Bean
+    public DbSessionDAO getSessionDAO() {
+        DbSessionDAO dbSessionDAO = new DbSessionDAO();
+//        dbSessionDAO.setCacheManager(getEhCacheManager());
+        return dbSessionDAO;
     }
 
     /**
      * 配置org.apache.shiro.session.mgt.eis.MemorySessionDAO
-     * 
+     *
      * @return
      */
-    @Bean
-    public MemorySessionDAO getMemorySessionDAO() {
-        // 关于MemorySessionDAO阅读资料：https://blog.csdn.net/qq_36816062/article/details/110448890
-        MemorySessionDAO memorySessionDAO = new MemorySessionDAO();
-        memorySessionDAO.setSessionIdGenerator(javaUuidSessionIdGenerator());
-        return memorySessionDAO;
-    }
+//    @Bean
+//    public MemorySessionDAO getMemorySessionDAO() {
+//        // 关于MemorySessionDAO阅读资料：https://blog.csdn.net/qq_36816062/article/details/110448890
+//        MemorySessionDAO memorySessionDAO = new MemorySessionDAO();
+//        memorySessionDAO.setSessionIdGenerator(javaUuidSessionIdGenerator());
+//        return memorySessionDAO;
+//    }
 
     @Bean
     public JavaUuidSessionIdGenerator javaUuidSessionIdGenerator() {
@@ -156,7 +184,7 @@ public class ShiroConfiguration {
 
     /**
      * 设置随springboot启动的安全管理器，交给spring管理
-     * 
+     *
      * @param {BackendUserRealm} backendUserRealm
      * @return {*}
      */
@@ -192,7 +220,7 @@ public class ShiroConfiguration {
 
     /**
      * session自定义cookie名
-     * 
+     *
      * @return
      */
     @Bean
@@ -224,7 +252,7 @@ public class ShiroConfiguration {
 
     /**
      * 开启shiro spring aop 权限注解支持，即：@RequiresPermissions(“权限code”
-     * 
+     *
      * @param userRealm
      * @return
      */

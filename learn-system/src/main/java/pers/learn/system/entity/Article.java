@@ -3,13 +3,14 @@
  * @Date: 2022-05-06 15:31:16
  * @LastEditors: konakona konakona@crazyphper.com
  * @LastEditTime: 2022-05-25 15:33:02
- * @Description: 
- * QQ:54583315 
+ * @Description:
+ * QQ:54583315
  *  https://www.crazyphper.com
- * Copyright (c) 2022 by konakona konakona@crazyphper.com, All Rights Reserved. 
+ * Copyright (c) 2022 by konakona konakona@crazyphper.com, All Rights Reserved.
  */
 package pers.learn.system.entity;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -98,5 +99,7 @@ public class Article implements Serializable {
     @Nullable
     @TableField(exist = false)
     @Transient
+    // 评论列表,如果为null则不显示此字段
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<ArticleComment> comments;
 }
