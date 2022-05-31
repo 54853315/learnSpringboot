@@ -24,6 +24,8 @@ logging:
 
 #Shiro
 shiro:
+  rememberMe:
+    enabled: true
   session:
     # 同步session到数据库的周期（默认1分钟）
     dbSyncPeriod: 1

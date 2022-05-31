@@ -7,29 +7,24 @@ import java.util.Map;
 import javax.servlet.Filter;
 
 import org.apache.shiro.cache.ehcache.EhCacheManager;
-import org.apache.shiro.session.mgt.eis.CachingSessionDAO;
-import org.apache.shiro.session.mgt.eis.EnterpriseCacheSessionDAO;
 import org.apache.shiro.session.mgt.eis.JavaUuidSessionIdGenerator;
-import org.apache.shiro.session.mgt.eis.MemorySessionDAO;
 import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.CookieRememberMeManager;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.servlet.SimpleCookie;
-import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import io.netty.handler.codec.base64.Base64;
 import pers.learn.framework.shiro.realm.BackendUserRealm;
-import pers.learn.framework.shiro.realm.UserRealm;
 import pers.learn.framework.shiro.session.DbSessionDAO;
 import pers.learn.framework.shiro.web.filter.online.DbSessionFilter;
 import pers.learn.framework.shiro.web.filter.sync.SyncDbSessionFilter;
+import pers.learn.framework.shiro.web.session.SessionManager;
 
 @Configuration
 public class ShiroConfiguration {
@@ -106,20 +101,15 @@ public class ShiroConfiguration {
         return filterChainDefinitionMap;
     }
 
-    /**
-     * 配置org.apache.shiro.web.session.mgt.DefaultWebSessionManager
-     *
-     * @return
-     */
     @Bean
-    public DefaultWebSessionManager getSessionManager() {
-        DefaultWebSessionManager manager = new DefaultWebSessionManager();
+    public SessionManager getSessionManager() {
+//        DbWebSessionManager manager = new DbWebSessionManager();
+        SessionManager manager = new SessionManager();
         // 设置session在内存中（shiro默认也是MemorySessionDAO)，适用于单机模式下的应用
         // manager.setSessionDAO(getMemorySessionDAO());
         // 自定义SessionDao
         manager.setSessionDAO(getSessionDAO());
         manager.setCacheManager(getEhCacheManager());
-        // System.out.println("dao:" + defaultWebSessionManager.getSessionDAO());
         // 删除过期的session
         manager.setDeleteInvalidSessions(true);
         // 设置全局session超时时间

@@ -25,7 +25,9 @@ public class ShiroService {
      * @param dbSession
      */
     public void deleteSession(DbSession dbSession) {
-        accessTokenService.removeById(dbSession.getId());
+        LambdaQueryWrapper<AccessToken> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(AccessToken::getSessionId, dbSession.getId());
+        accessTokenService.remove(wrapper);
     }
 
     /**

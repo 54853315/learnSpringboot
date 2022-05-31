@@ -11,6 +11,9 @@ import pers.learn.framework.shiro.service.ShiroService;
 import java.io.Serializable;
 import java.util.Date;
 
+/**
+ * 实现Session存入DB
+ */
 public class DbSessionDAO extends EnterpriseCacheSessionDAO {
 
     @Autowired
@@ -27,6 +30,7 @@ public class DbSessionDAO extends EnterpriseCacheSessionDAO {
 
     @Override
     protected Session doReadSession(Serializable sessionId) {
+        System.out.println("doReadSession");
         return shiroService.getSession(sessionId);
     }
 
@@ -58,14 +62,14 @@ public class DbSessionDAO extends EnterpriseCacheSessionDAO {
 
     /**
      * 当会话过期/停止（如用户退出时）会调用
+     * ！ 注意，异常会被捕获，不会出现在终端中，如遇问题请debug断点测试
      * @param session
      */
     protected void doDelete(Session session) {
-        DbSession dbSession = (DbSession) session;
-        if (dbSession != null) {
-            dbSession.setStatus(OnlineStatus.offline);
-            shiroService.deleteSession(dbSession);
-        }
+        DbSession dbSession = new DbSession();
+        dbSession.setId(session.getId());
+        dbSession.setStatus(OnlineStatus.offline);
+        shiroService.deleteSession(dbSession);
     }
 
 
