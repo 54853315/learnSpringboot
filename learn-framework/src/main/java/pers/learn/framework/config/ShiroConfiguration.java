@@ -25,12 +25,19 @@ import pers.learn.common.constant.Shiro;
 import pers.learn.common.util.security.CipherUtils;
 import pers.learn.framework.shiro.realm.BackendUserRealm;
 import pers.learn.framework.shiro.session.DbSessionDAO;
+import pers.learn.framework.shiro.session.DbSessionFactory;
 import pers.learn.framework.shiro.web.filter.online.DbSessionFilter;
 import pers.learn.framework.shiro.web.filter.sync.SyncDbSessionFilter;
 import pers.learn.framework.shiro.web.session.SessionManager;
 
 @Configuration
 public class ShiroConfiguration {
+
+    /**
+     * Session超时时间，单位为毫秒（默认30分钟）
+     */
+    @Value("${shiro.session.expireTime}")
+    private int expireTime;
 
     /**
      * 是否开启记住我功能
@@ -120,16 +127,30 @@ public class ShiroConfiguration {
         // 自定义SessionDao
         manager.setSessionDAO(getSessionDAO());
         manager.setCacheManager(getEhCacheManager());
+        // 去掉 JSESSIONID
+        manager.setSessionIdUrlRewritingEnabled(false);
         // 删除过期的session
         manager.setDeleteInvalidSessions(true);
-        // 设置全局session超时时间
-        manager.setGlobalSessionTimeout(4200000);
+        // 设置全局session超时时间 单位：微秒
+        manager.setGlobalSessionTimeout((long) expireTime * 60 * 1000);
         // 定时检查session
         manager.setSessionValidationSchedulerEnabled(true);
         // 启用cookie中存储sessionid
-        manager.setSessionIdCookieEnabled(true);
-        manager.setSessionIdCookie(getSimpleCookie());
+//        manager.setSessionIdCookieEnabled(true);
+//        manager.setSessionIdCookie(getSimpleCookie());
+        // 自定义sessionFactory
+        manager.setSessionFactory(sessionFactory());
         return manager;
+    }
+
+    /**
+     * 自定义sessionFactory会话
+     */
+    @Bean
+    public DbSessionFactory sessionFactory()
+    {
+        DbSessionFactory dbSessionFactory = new DbSessionFactory();
+        return dbSessionFactory;
     }
 
     /**

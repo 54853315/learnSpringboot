@@ -41,29 +41,23 @@ public class DbSessionFilter extends AccessControlFilter {
         if (subject == null || subject.getSession() == null) {
             return true;
         }
-        // 获取当前会话，这里的数据获取路径为：DbSessionDAO.doReadSession->ShiroService.createSession返回的DbSession实体
-        Session session = dbSessionDAO.readSession(subject.getSession().getId());
-        if (!(session instanceof DbSession)) {
-            System.out.println("哦？不是DbSession，哪里来的野路子？");
-        }
+        // 获取当前会话，并强制转换为DbSession实体的结构，这里的数据获取路径为：
+        // A. DbSessionDAO.doReadSession->ShiroService.createSession返回的DbSession实体
+        // B. DbSessionDAO.readSession从cacheSession中提取到了SimpleSession实体
+        DbSession dbSession = (DbSession) dbSessionDAO.readSession(subject.getSession().getId());
+//        Session session =  dbSessionDAO.readSession(subject.getSession().getId());
 
-        ModelMapper modelMapper = new ModelMapper();
-        DbSession dbSession = modelMapper.map(session, DbSession.class);
-
-        servletRequest.setAttribute(Shiro.ONLINE_SESSION, dbSession);
-
-        // 如果还没有db session数据，就提取subject创建
+        // 如果没有没有用户信息就提取subject来填充（DAO.readSession会从Cache中获取SimpleSession结构，是没有DbSession中的user_id这些自定义属性的）
         if (dbSession.getUserId() == null || dbSession.getUserId() == 0L) {
             BackendUser backendUser = (BackendUser) subject.getPrincipal();
             if (backendUser != null) {
                 dbSession.setUserId(backendUser.getId());
                 dbSession.setLoginName(backendUser.getName());
-            } else {
-                throw new ApiException("没有获取到用户？看一下为什么会这样，这一步不应该有");
             }
-            if (dbSession.getStatus() == OnlineStatus.offline) {
-                return false;
-            }
+        }
+        servletRequest.setAttribute(Shiro.ONLINE_SESSION, dbSession);
+        if (dbSession.getStatus() == OnlineStatus.offline) {
+            return false;
         }
         return true;
     }
@@ -79,7 +73,7 @@ public class DbSessionFilter extends AccessControlFilter {
      */
     @Override
     protected boolean onAccessDenied(ServletRequest servletRequest, ServletResponse servletResponse) throws Exception {
-        System.out.println("进入onAccessDenied啦！");
+        log.info("拒绝访问，让用户下线");
         Subject subject = getSubject(servletRequest, servletResponse);
         if (subject != null) {
             subject.logout();
