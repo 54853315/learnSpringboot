@@ -196,9 +196,13 @@ public class ShiroConfiguration {
         return new JavaUuidSessionIdGenerator();
     }
 
-    // 配置LifecycleBeanPostProcessor以管理shiro Bean的生命周期
+    /**
+     * 配置LifecycleBeanPostProcessor以管理shiro Bean的生命周期
+     * ! 如果要使用@Value注解，本方法必须是static
+     * @return
+     */
     @Bean
-    public LifecycleBeanPostProcessor getLifecycleBeanPostProcessor() {
+    public static LifecycleBeanPostProcessor getLifecycleBeanPostProcessor() {
         return new LifecycleBeanPostProcessor();
     }
 

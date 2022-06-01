@@ -43,11 +43,11 @@ public class DbSessionFilter extends AccessControlFilter {
         }
         // 获取当前会话，并强制转换为DbSession实体的结构，这里的数据获取路径为：
         // A. DbSessionDAO.doReadSession->ShiroService.createSession返回的DbSession实体
-        // B. DbSessionDAO.readSession从cacheSession中提取到了SimpleSession实体
+        // B. DbSessionDAO.readSession从cacheSession中提取到了SimpleSession实体（使用DbSessionFactory来设定session对象的话，cache中拿到的也会是DbSession）
         DbSession dbSession = (DbSession) dbSessionDAO.readSession(subject.getSession().getId());
 //        Session session =  dbSessionDAO.readSession(subject.getSession().getId());
 
-        // 如果没有没有用户信息就提取subject来填充（DAO.readSession会从Cache中获取SimpleSession结构，是没有DbSession中的user_id这些自定义属性的）
+        // 如果没有用户信息就从subject中填充
         if (dbSession.getUserId() == null || dbSession.getUserId() == 0L) {
             BackendUser backendUser = (BackendUser) subject.getPrincipal();
             if (backendUser != null) {
