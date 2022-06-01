@@ -69,8 +69,10 @@ public class DbSessionDAO extends EnterpriseCacheSessionDAO {
      */
     protected void doDelete(Session session) {
         log.info("DbSessionDAO::doDelete");
-        DbSession dbSession = new DbSession();
-        dbSession.setId(session.getId());
+        DbSession dbSession = (DbSession) session;
+        if (dbSession == null) {
+            return;
+        }
         dbSession.setStatus(OnlineStatus.offline);
         shiroService.deleteSession(dbSession);
     }
