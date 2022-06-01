@@ -49,6 +49,7 @@ public class ShiroService {
      */
     public DbSession createSession(AccessToken accessToken) {
         DbSession dbSession = new DbSession();
+        dbSession.setUserId(accessToken.getUserId());
         dbSession.setId(accessToken.getSessionId());
         dbSession.setHost(accessToken.getIpaddr());
         dbSession.setLoginName(accessToken.getLoginName());

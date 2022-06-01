@@ -15,7 +15,7 @@ import java.io.Serializable;
  * 从头部中获取Authorization并做为session id
  */
 public class SessionManager extends DefaultWebSessionManager {
-    private static final Logger log = LoggerFactory.getLogger(DefaultWebSessionManager.class);
+    private static final Logger log = LoggerFactory.getLogger(SessionManager.class);
     private final String authorization = "Authorization";
 
     /**

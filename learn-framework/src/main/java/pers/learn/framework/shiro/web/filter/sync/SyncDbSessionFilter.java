@@ -1,6 +1,10 @@
 package pers.learn.framework.shiro.web.filter.sync;
 
 import org.apache.shiro.web.filter.PathMatchingFilter;
+import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import pers.learn.common.constant.Shiro;
 import pers.learn.framework.shiro.session.DbSession;
 import pers.learn.framework.shiro.session.DbSessionDAO;
 
@@ -11,6 +15,8 @@ import javax.servlet.ServletResponse;
  * 同步Session数据到Db
  */
 public class SyncDbSessionFilter extends PathMatchingFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(SyncDbSessionFilter.class);
 
     private DbSessionDAO dbSessionDAO;
 
@@ -30,10 +36,9 @@ public class SyncDbSessionFilter extends PathMatchingFilter {
      * @throws Exception
      */
     protected boolean onPreHandle(ServletRequest request, ServletResponse response, Object mappedValue) throws Exception {
-        System.out.println("onPreHandle");
-        DbSession dbSession = (DbSession) request.getAttribute("online_session");
-//        System.out.println();
-        // 当session 停止了，就不同步
+        log.info("SyncDbSessionFilter::onPreHandle");
+        DbSession dbSession = (DbSession) request.getAttribute(Shiro.ONLINE_SESSION);
+        // 如果session已经停止，就无需同步到db
         if (dbSession != null && dbSession.getUserId() != null && dbSession.getStopTimestamp() == null) {    //stopTimestamp不为null，则代表已停止
             dbSessionDAO.syncToDb(dbSession);
         }

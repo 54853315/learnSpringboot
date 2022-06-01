@@ -7,6 +7,7 @@ import org.apache.shiro.cache.Cache;
 import org.apache.shiro.cache.ehcache.EhCacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import pers.learn.common.constant.Shiro;
 import pers.learn.common.util.DateAdopter;
 import pers.learn.system.entity.AccessToken;
 import pers.learn.system.mapper.AccessTokenMapper;
@@ -35,13 +36,13 @@ public class AccessTokenServiceImpl extends ServiceImpl<AccessTokenMapper, Acces
 
     /**
      * 清理用户缓存
-     *
+     * ! 未测试
      * @param loginName
      * @param sessionId
      */
     @Override
     public void removeUserCache(String loginName, String sessionId) {
-        Cache<String, Deque<Serializable>> cache = ehCacheManager.getCache("sys-userCache");
+        Cache<String, Deque<Serializable>> cache = ehCacheManager.getCache(Shiro.BACKEND_AUTH_CACHE);
         Deque<Serializable> deque = cache.get(loginName);
         if (deque == null || deque.size() == 0) {
             return;

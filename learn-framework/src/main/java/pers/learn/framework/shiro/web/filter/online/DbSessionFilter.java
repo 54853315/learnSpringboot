@@ -5,11 +5,15 @@ import org.apache.shiro.session.mgt.SimpleSession;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.web.filter.AccessControlFilter;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import pers.learn.common.constant.Shiro;
 import pers.learn.common.enums.OnlineStatus;
 import pers.learn.common.exception.ApiException;
 import pers.learn.framework.shiro.session.DbSession;
 import pers.learn.framework.shiro.session.DbSessionDAO;
+import pers.learn.framework.shiro.web.filter.sync.SyncDbSessionFilter;
 import pers.learn.system.entity.BackendUser;
 
 import javax.servlet.ServletRequest;
@@ -21,6 +25,8 @@ import javax.servlet.ServletResponse;
  */
 public class DbSessionFilter extends AccessControlFilter {
 
+    private static final Logger log = LoggerFactory.getLogger(DbSessionFilter.class);
+
     private DbSessionDAO dbSessionDAO;
 
 
@@ -30,21 +36,21 @@ public class DbSessionFilter extends AccessControlFilter {
 
     @Override
     protected boolean isAccessAllowed(ServletRequest servletRequest, ServletResponse servletResponse, Object o) throws Exception {
+        log.info("DbSessionFilter:isAccessAllowed，允许访问，开始判断用户是否还在线");
         Subject subject = getSubject(servletRequest, servletResponse);
-        System.out.println("-----isAccessAllowed进来啦");
         if (subject == null || subject.getSession() == null) {
             return true;
         }
-        // 获取当前会话
+        // 获取当前会话，这里的数据获取路径为：DbSessionDAO.doReadSession->ShiroService.createSession返回的DbSession实体
         Session session = dbSessionDAO.readSession(subject.getSession().getId());
-        if (session instanceof DbSession) {
-            System.out.println("wa~~~~");
+        if (!(session instanceof DbSession)) {
+            System.out.println("哦？不是DbSession，哪里来的野路子？");
         }
 
         ModelMapper modelMapper = new ModelMapper();
         DbSession dbSession = modelMapper.map(session, DbSession.class);
 
-        servletRequest.setAttribute("online_session", dbSession);
+        servletRequest.setAttribute(Shiro.ONLINE_SESSION, dbSession);
 
         // 如果还没有db session数据，就提取subject创建
         if (dbSession.getUserId() == null || dbSession.getUserId() == 0L) {
@@ -52,29 +58,9 @@ public class DbSessionFilter extends AccessControlFilter {
             if (backendUser != null) {
                 dbSession.setUserId(backendUser.getId());
                 dbSession.setLoginName(backendUser.getName());
-                System.out.println(dbSession);
-//                    dbSession.markAttributeChanged();
             } else {
                 throw new ApiException("没有获取到用户？看一下为什么会这样，这一步不应该有");
             }
-
-
-//            DbSession dbSession = new DbSession();
-//            dbSession.
-//            servletRequest.setAttribute("online_session", dbSession);
-//
-//            // 如果还没有db session数据，就提取subject创建
-//            if (dbSession.getUserId() == null || dbSession.getUserId() == 0L) {
-//                BackendUser backendUser = (BackendUser) subject.getPrincipals();
-//                if (backendUser != null) {
-//                    dbSession.setUserId(backendUser.getId());
-//                    dbSession.setLoginName(backendUser.getName());
-//                    System.out.println(dbSession);
-////                    dbSession.markAttributeChanged();
-//                } else {
-//                    throw new ApiException("没有获取到用户？看一下为什么会这样，这一步不应该有");
-//                }
-//            }
             if (dbSession.getStatus() == OnlineStatus.offline) {
                 return false;
             }
@@ -98,6 +84,7 @@ public class DbSessionFilter extends AccessControlFilter {
         if (subject != null) {
             subject.logout();
         }
+        // 提示前往登录接口
         saveRequestAndRedirectToLogin(servletRequest, servletResponse);
         return false;
     }

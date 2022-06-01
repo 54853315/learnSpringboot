@@ -7,6 +7,7 @@ import java.util.Map;
 import javax.servlet.Filter;
 
 import org.apache.shiro.cache.ehcache.EhCacheManager;
+import org.apache.shiro.codec.Base64;
 import org.apache.shiro.session.mgt.eis.JavaUuidSessionIdGenerator;
 import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
@@ -20,6 +21,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import pers.learn.common.constant.Shiro;
+import pers.learn.common.util.security.CipherUtils;
 import pers.learn.framework.shiro.realm.BackendUserRealm;
 import pers.learn.framework.shiro.session.DbSessionDAO;
 import pers.learn.framework.shiro.web.filter.online.DbSessionFilter;
@@ -41,6 +44,12 @@ public class ShiroConfiguration {
     @Value("${shiro.cookie.maxAge}")
     private int maxAge;
 
+    /**
+     * 设置cipherKey密钥
+     */
+    @Value("${shiro.cookie.cipherKey}")
+    private String cipherKey;
+
     @Bean
     public EhCacheManager getEhCacheManager() {
         EhCacheManager em = new EhCacheManager();
@@ -49,16 +58,13 @@ public class ShiroConfiguration {
     }
 
     /**
-     * ShiroFilterFactoryBean 处理拦截资源文件问题。
-     * 注意：单独一个ShiroFilterFactoryBean配置是或报错的，以为在
-     * 初始化ShiroFilterFactoryBean的时候需要注入：SecurityManager
-     * Filter Chain定义说明 1、一个URL可以配置多个Filter，使用逗号分隔 2、当设置多个过滤器时，全部验证通过，才视为通过
-     * 3、部分过滤器可指定参数，如perms，roles
+     * ShiroFilterFactoryBean 拦截资源文件
+     *
+     * @param securityManager
+     * @return
      */
     @Bean
-    // public ShiroFilterFactoryBean shirFilter(org.apache.shiro.mgt.SecurityManager
-    // securityManager) {
-    public ShiroFilterFactoryBean shirFilter(
+    public ShiroFilterFactoryBean shiroFilterFactoryBean(
             @Qualifier("securityManager") org.apache.shiro.mgt.SecurityManager securityManager) {
         ShiroFilterFactoryBean shiroFilterFactoryBean = new ShiroFilterFactoryBean();
 
@@ -78,24 +84,28 @@ public class ShiroConfiguration {
         return shiroFilterFactoryBean;
     }
 
-    // 拦截器配置
+    /**
+     * Shiro连接约束配置，即过滤链的定义
+     * Filter Chain定义说明
+     * 1、一个URL可以配置多个Filter，使用逗号分隔
+     * 2、当设置多个过滤器时，全部验证通过，才视为通过
+     * 3、部分过滤器可指定参数，如perms，roles
+     *
+     * @return
+     */
     public LinkedHashMap<String, String> getFilterChainDefinitionMap() {
         LinkedHashMap<String, String> filterChainDefinitionMap = new LinkedHashMap<String, String>();
-        // authc:所有url都必须认证通过才可以访问; anon:所有url都都可以匿名访问
+        // NOTE: authc:所有url都必须认证通过才可以访问; anon:所有url都都可以匿名访问
 
         // 配置静态资源允许访问
         filterChainDefinitionMap.put("/js/**", "anon");
         filterChainDefinitionMap.put("/css/**", "anon");
-
         // filterChainDefinitionMap.put("/article/**", "roles[admin],perms[article:*]");
-        // // 可以在这里写perms权限要求，但没必要
-        filterChainDefinitionMap.put("/article/**", "authc");
         // 一些公共接口允许访问
         filterChainDefinitionMap.put("/guest/**", "anon");
         filterChainDefinitionMap.put("/admin/auth/unauthorized", "anon");
         filterChainDefinitionMap.put("/admin/auth/login", "anon");
-        // 其他资源都需要授权才能访问
-//        filterChainDefinitionMap.put("/**", "authc");
+        // 其他所有资源都需要授权才能访问
         filterChainDefinitionMap.put("/**", "user,dbSession,syncDbSession");
 
         return filterChainDefinitionMap;
@@ -160,7 +170,6 @@ public class ShiroConfiguration {
 //        memorySessionDAO.setSessionIdGenerator(javaUuidSessionIdGenerator());
 //        return memorySessionDAO;
 //    }
-
     @Bean
     public JavaUuidSessionIdGenerator javaUuidSessionIdGenerator() {
         return new JavaUuidSessionIdGenerator();
@@ -179,18 +188,17 @@ public class ShiroConfiguration {
      * @return {*}
      */
     @Bean(name = "securityManager")
-    public DefaultWebSecurityManager getDefaultWebSecurityManager(
-            @Qualifier("backendUserRealm") BackendUserRealm backendUserRealm) {
-        DefaultWebSecurityManager dwsm = new DefaultWebSecurityManager();
-        dwsm.setRealm(backendUserRealm);
+    public DefaultWebSecurityManager getSecurityManager(@Qualifier("backendUserRealm") BackendUserRealm backendUserRealm) {
+        DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
+        securityManager.setRealm(backendUserRealm);
         // 是否启用记住我
-        dwsm.setRememberMeManager(rememberMe ? rememberMeManager() : null);
+        securityManager.setRememberMeManager(rememberMe ? rememberMeManager() : null);
         // !用户授权/认证信息Cache, 采用EhCache 缓存
-        dwsm.setCacheManager(getEhCacheManager());
+        securityManager.setCacheManager(getEhCacheManager());
         // session管理器
-        dwsm.setSessionManager(getSessionManager());
+        securityManager.setSessionManager(getSessionManager());
         System.out.println("安全管理器注册完毕");
-        return dwsm;
+        return securityManager;
     }
 
     /**
@@ -199,12 +207,11 @@ public class ShiroConfiguration {
     public CookieRememberMeManager rememberMeManager() {
         CookieRememberMeManager cookieRememberMeManager = new CookieRememberMeManager();
         cookieRememberMeManager.setCookie(rememberMeCookie());
-        //TODO 需要完善
-        // if (StringUtils.isNotEmpty(cipherKey)) {
-        //     cookieRememberMeManager.setCipherKey(Base64.decode(cipherKey));
-        // } else {
-        //     cookieRememberMeManager.setCipherKey(CipherUtils.generateNewKey(128, "AES").getEncoded());
-        // }
+        if (cipherKey != null) {
+            cookieRememberMeManager.setCipherKey(Base64.decode(cipherKey));
+        } else {
+            cookieRememberMeManager.setCipherKey(CipherUtils.generateNewKey(128, "AES").getEncoded());
+        }
         return cookieRememberMeManager;
     }
 
@@ -241,6 +248,7 @@ public class ShiroConfiguration {
     }
 
     /**
+     * 开启Shiro注解通知器
      * 开启shiro spring aop 权限注解支持，即：@RequiresPermissions(“权限code”
      *
      * @param userRealm
@@ -249,7 +257,7 @@ public class ShiroConfiguration {
     @Bean
     public AuthorizationAttributeSourceAdvisor getAuthorizationAttributeSourceAdvisor(BackendUserRealm userRealm) {
         AuthorizationAttributeSourceAdvisor aasa = new AuthorizationAttributeSourceAdvisor();
-        aasa.setSecurityManager(getDefaultWebSecurityManager(userRealm));
+        aasa.setSecurityManager(getSecurityManager(userRealm));
         return aasa;
     }
 
@@ -259,7 +267,7 @@ public class ShiroConfiguration {
         BackendUserRealm userRealm = new BackendUserRealm();
         // 在注册BackendUserRealm时设置采用EhCache缓存
         userRealm.setCacheManager(cacheManager);
-        userRealm.setAuthorizationCacheName("backend");
+        userRealm.setAuthorizationCacheName(Shiro.BACKEND_AUTH_CACHE);
         // NOTE 会先于securityManager完成注册
         System.out.println("backendUserRealm注册完毕");
         return userRealm;

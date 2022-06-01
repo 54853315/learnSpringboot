@@ -24,8 +24,17 @@ clearOnFlush：内存数量最大时是否清除。
           diskPersistent="false"  
           diskExpiryThreadIntervalSeconds="120"
           memoryStoreEvictionPolicy="LRU"/>
+<!-- 系统会话缓存设定 -->
  <cache name="shiro-activeSessionCache" 
    eternal="false"  
+        maxElementsInMemory="10000"
+        overflowToDisk="false"
+        timeToIdleSeconds="0"
+        timeToLiveSeconds="0"
+        statistics="true"/>
+<!-- 管理后台用户的缓存设定，不会过期-->
+ <cache name="sys-backendUserSessionCache"
+        eternal="false"
         maxElementsInMemory="10000"
         overflowToDisk="false"
         timeToIdleSeconds="0"
