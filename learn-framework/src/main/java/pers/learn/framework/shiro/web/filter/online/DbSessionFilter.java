@@ -38,8 +38,21 @@ public class DbSessionFilter extends AccessControlFilter {
     protected boolean isAccessAllowed(ServletRequest servletRequest, ServletResponse servletResponse, Object o) throws Exception {
         log.info("DbSessionFilter:isAccessAllowed，允许访问，开始判断用户是否还在线");
         Subject subject = getSubject(servletRequest, servletResponse);
-        if (subject == null || subject.getSession() == null) {
+        if (subject.getSession() == null) {
+            log.info("用户没有提供session，踢出");
             return true;
+        }
+        //用户未登录，但有"记住我"状态
+        if (!subject.isAuthenticated() && subject.isRemembered()) {
+            log.info("这是一个记住我（有信息）的访客（未授权）");
+            // 严格的敏感程序不建议在这个状态下为用户获取用户状态，所以return true把它踢出去
+//            return true;
+            // 如果是非严格的程序，比如登录微博看看流量，那么可以给用户基于"记住我"找回登录状态
+//            Session session = subject.getSession();
+//            if (session == null) {
+            // 在这种方法里面做初始化用户上下文的事情，比方通过查询数据库来设置session值，确保subject.isAuthenticated()就会变成true
+//                shiroService.initUserContext(subject.getPrincipal().toString(), subject);
+//            }
         }
         // 获取当前会话，并强制转换为DbSession实体的结构，这里的数据获取路径为：
         // A. DbSessionDAO.doReadSession->ShiroService.createSession返回的DbSession实体

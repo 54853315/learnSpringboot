@@ -10,8 +10,11 @@
 package pers.learn.framework.exception;
 
 import org.apache.ibatis.javassist.NotFoundException;
+import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.UnauthorizedException;
+import org.apache.shiro.session.ExpiredSessionException;
+import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -36,15 +39,26 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public CommonResponse<String> runtimeException(Exception e) {
-        logger.error(e.getMessage(), e);
+        logger.error("捕获RuntimeExcept："+e.getMessage(), e);
         return CommonResponse.fail(e.getMessage());
     }
 
     // 当用户访问未经授权的资源时，如果没有主动捕获，统一返回这条
     @ExceptionHandler(value = {AuthorizationException.class, UnauthorizedException.class})
     public CommonResponse<String> authorizationException(AuthorizationException e) {
+        logger.error(e.getMessage());
+        Subject subject = SecurityUtils.getSubject();
+        if(subject.isAuthenticated()){
+            return CommonResponse.fail("您已登录过了");
+        }
         return CommonResponse.fail("无授权，不可访问");
     }
+
+    @ExceptionHandler(value = {ExpiredSessionException.class})
+    public CommonResponse<String> expiredSessionException(AuthorizationException e) {
+        return CommonResponse.fail("授权已过期，请重新登录");
+    }
+
 
     // 当用户访问需要RequestBody的资源却没有携带时，统一返回这条
     @ExceptionHandler(value = {HttpMessageNotReadableException.class})

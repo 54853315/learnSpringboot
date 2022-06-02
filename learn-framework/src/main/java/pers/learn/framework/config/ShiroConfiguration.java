@@ -102,7 +102,7 @@ public class ShiroConfiguration {
      */
     public LinkedHashMap<String, String> getFilterChainDefinitionMap() {
         LinkedHashMap<String, String> filterChainDefinitionMap = new LinkedHashMap<String, String>();
-        // NOTE: authc:所有url都必须认证通过才可以访问; anon:所有url都都可以匿名访问
+        // NOTE: authc:所有url都必须认证通过才可以访问; anon:所有url都都可以匿名访问；user指的是用户认证通过或者配置了Remember Me记住用户登录状态后可访问。
 
         // 配置静态资源允许访问
         filterChainDefinitionMap.put("/js/**", "anon");

@@ -17,6 +17,11 @@ import pers.learn.system.dto.BackendUserLoginBodyDto;
 import pers.learn.common.response.CommonResponse;
 import pers.learn.system.service.impl.BackendUserServiceImpl;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/admin/auth")
 public class BackendUserController {
@@ -25,35 +30,36 @@ public class BackendUserController {
 
     @PostMapping(value = "/login")
     @RequiresGuest
-    public CommonResponse<String> login(@RequestBody BackendUserLoginBodyDto requestBody) {
-        UsernamePasswordToken token = new UsernamePasswordToken(requestBody.username, requestBody.password);
+    public CommonResponse<Object> login(@RequestBody BackendUserLoginBodyDto requestBody) {
+        UsernamePasswordToken token = new UsernamePasswordToken(requestBody.username, requestBody.password, requestBody.rememberMe);
         Subject subject = SecurityUtils.getSubject();
-        
+
         try {
             subject.login(token);
         } catch (AuthenticationException e) {
             return CommonResponse.fail("登录失败，请检查账号密码");
         }
-        System.out.println("登陆完成" + subject);
-        return CommonResponse.success();
+        System.out.println("记住我状态：" + subject.isRemembered());
+        Map<String, String> ret = new HashMap<>();
+        ret.put("token", subject.getSession().getId().toString());
+        return CommonResponse.returnResult(ret);
     }
 
     /**
-     * @example:
-     *           {
-     *           "code": "200 OK",
-     *           "message": "success",
-     *           "data": {
-     *           "id": 1,
-     *           "name": "看报纸的小老头",
-     *           "email": "abc@qq.com",
-     *           "roleId": 3,
-     *           "createTime": "2022-05-23 16-06-03",
-     *           "updateTime": null
-     *           },
-     *           "timestamp": "2022-05-23 21:16:11"
-     *           }
      * @return CommonResponse<BackendUser>
+     * @example: {
+     * "code": "200 OK",
+     * "message": "success",
+     * "data": {
+     * "id": 1,
+     * "name": "看报纸的小老头",
+     * "email": "abc@qq.com",
+     * "roleId": 3,
+     * "createTime": "2022-05-23 16-06-03",
+     * "updateTime": null
+     * },
+     * "timestamp": "2022-05-23 21:16:11"
+     * }
      */
     @GetMapping(value = "/info")
     public CommonResponse<BackendUser> currentUserInfo() {
