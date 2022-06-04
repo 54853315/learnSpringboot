@@ -22,10 +22,16 @@ logging:
     pers.learn: debug
     org.springframework: warn
 
+#Jwt oauth
+jwt:
+  issuer: learn
+  secretKey: konakona
+  # jwt 过期时间，单位：分钟
+  expireTime: 30
 #Shiro
 shiro:
   rememberMe:
-    enabled: true
+    enabled: false
   cookie:
     # 设置Cookie的过期时间，天为单位
     maxAge: 30

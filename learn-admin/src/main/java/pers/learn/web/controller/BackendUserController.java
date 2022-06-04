@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import pers.learn.framework.shiro.token.BearerAuthenticationToken;
+import pers.learn.framework.shiro.token.JWTUsernamePasswordToken;
 import pers.learn.system.entity.BackendUser;
 import pers.learn.system.dto.BackendUserLoginBodyDto;
 import pers.learn.common.response.CommonResponse;
@@ -32,6 +34,7 @@ public class BackendUserController {
     @RequiresGuest
     public CommonResponse<Object> login(@RequestBody BackendUserLoginBodyDto requestBody) {
         UsernamePasswordToken token = new UsernamePasswordToken(requestBody.username, requestBody.password, requestBody.rememberMe);
+//        UsernamePasswordToken token = new BearerAuthenticationToken(requestBody.username, requestBody.password);
         Subject subject = SecurityUtils.getSubject();
 
         try {
@@ -39,9 +42,8 @@ public class BackendUserController {
         } catch (AuthenticationException e) {
             return CommonResponse.fail("登录失败，请检查账号密码");
         }
-        System.out.println("记住我状态：" + subject.isRemembered());
         Map<String, String> ret = new HashMap<>();
-        ret.put("token", subject.getSession().getId().toString());
+        ret.put("token", subject.getPrincipal().toString());
         return CommonResponse.returnResult(ret);
     }
 

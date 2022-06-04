@@ -42,6 +42,11 @@
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+        </dependency>
+
         <!-- Shiro使用Spring框架 -->
         <dependency>
             <groupId>org.apache.shiro</groupId>

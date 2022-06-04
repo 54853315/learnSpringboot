@@ -6,14 +6,13 @@ import org.apache.shiro.session.InvalidSessionException;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.session.mgt.DefaultSessionKey;
 import org.apache.shiro.session.mgt.SessionKey;
-import org.apache.shiro.session.mgt.SimpleSession;
 import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import pers.learn.framework.shiro.session.DbSession;
-import pers.learn.system.entity.AccessToken;
-import pers.learn.system.service.AccessTokenService;
+import pers.learn.system.entity.OnlineSession;
+import pers.learn.system.service.OnlineSessionService;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,7 +26,7 @@ import java.util.List;
 public class DbWebSessionManager extends DefaultWebSessionManager {
     private static final Logger log = LoggerFactory.getLogger(DbWebSessionManager.class);
     @Autowired
-    private AccessTokenService accessTokenService;
+    private OnlineSessionService onlineSessionService;
 
     @Override
     public void setAttribute(SessionKey sessionKey, Object attributeKey, Object value) throws InvalidSessionException
@@ -114,10 +113,10 @@ public class DbWebSessionManager extends DefaultWebSessionManager {
         }
         Date expiredDate = DateUtils.addMilliseconds(new Date(), 0 - timeout);
 //        AccessTokenService accessTokenService = SpringUtils.getBean(AccessTokenService.class);
-        List<AccessToken> userOnlineList = accessTokenService.selectTokenByExpired(expiredDate);
+        List<OnlineSession> userOnlineList = onlineSessionService.selectTokenByExpired(expiredDate);
         // 批量过期删除
         List<Long> needOfflineIdList = new ArrayList<Long>();
-        for (AccessToken userOnline : userOnlineList)
+        for (OnlineSession userOnline : userOnlineList)
         {
             try
             {
@@ -139,7 +138,7 @@ public class DbWebSessionManager extends DefaultWebSessionManager {
                 }
                 invalidCount++;
                 needOfflineIdList.add(userOnline.getId());
-                accessTokenService.removeUserCache(userOnline.getLoginName(), userOnline.getSessionId());
+                onlineSessionService.removeUserCache(userOnline.getLoginName(), userOnline.getSessionId());
             }
 
         }
@@ -147,7 +146,7 @@ public class DbWebSessionManager extends DefaultWebSessionManager {
         {
             try
             {
-                accessTokenService.removeBatchByIds(needOfflineIdList);
+                onlineSessionService.removeBatchByIds(needOfflineIdList);
             }
             catch (Exception e)
             {

@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import pers.learn.common.enums.OnlineStatus;
-import pers.learn.framework.shiro.service.ShiroSessionService;
+import pers.learn.framework.shiro.service.ShiroTokenService;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -16,15 +16,15 @@ import java.util.Date;
 /**
  * 实现Session存入DB
  */
-public class DbSessionDAO extends EnterpriseCacheSessionDAO {
+public class TokenSessionDAO extends EnterpriseCacheSessionDAO {
 
-    private static final Logger log = LoggerFactory.getLogger(DbSessionDAO.class);
+    private static final Logger log = LoggerFactory.getLogger(TokenSessionDAO.class);
 
     @Autowired
-    private ShiroSessionService shiroSessionService;
+    private ShiroTokenService shiroTokenService;
 
     //上次同步数据库的时间戳
-    private static final String LAST_SYNC_DB_TIMESTAMP = DbSessionDAO.class.getName() + "LAST_SYNC_DB_TIMESTAMP";
+    private static final String LAST_SYNC_DB_TIMESTAMP = TokenSessionDAO.class.getName() + "LAST_SYNC_DB_TIMESTAMP";
 
     /**
      * 同步session到数据库的周期 单位为毫秒（默认1分钟）
@@ -32,11 +32,11 @@ public class DbSessionDAO extends EnterpriseCacheSessionDAO {
     @Value("${shiro.session.dbSyncPeriod}")
     private int dbSyncPeriod;
 
-    @Override
-    protected Session doReadSession(Serializable sessionId) {
-        log.info("DbSessionDAO::doReadSession");
-        return shiroSessionService.getSession(sessionId);
-    }
+//    @Override
+//    protected Session doReadSession(Serializable sessionId) {
+//        log.info("DbSessionDAO::doReadSession");
+////        return shiroTokenService.(sessionId);
+//    }
 
     @Override
     public void update(Session session) throws UnknownSessionException {
@@ -56,7 +56,7 @@ public class DbSessionDAO extends EnterpriseCacheSessionDAO {
         if (needSync) {
             // 更新上次同步数据库时间
             dbSession.setAttribute(LAST_SYNC_DB_TIMESTAMP, dbSession.getLastAccessTime());
-            shiroSessionService.saveOnline(dbSession);
+//            shiroTokenService.saveToken(dbSession);
             log.info("db & session完成同步");
         }
     }
@@ -68,13 +68,13 @@ public class DbSessionDAO extends EnterpriseCacheSessionDAO {
      * @param session
      */
     protected void doDelete(Session session) {
-        log.info("DbSessionDAO::doDelete");
-        DbSession dbSession = (DbSession) session;
-        if (dbSession == null) {
-            return;
-        }
-        dbSession.setStatus(OnlineStatus.offline);
-        shiroSessionService.deleteSession(dbSession);
+//        log.info("DbSessionDAO::doDelete");
+//        DbSession dbSession = (DbSession) session;
+//        if (dbSession == null) {
+//            return;
+//        }
+//        dbSession.setStatus(OnlineStatus.offline);
+//        shiroTokenService.deleteToken(dbSession);
     }
 
 
