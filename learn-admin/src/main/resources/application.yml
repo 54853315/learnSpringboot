@@ -19,7 +19,7 @@ server:
 # 日志配置
 logging:
   level:
-    pers.learn: debug
+    pers.learn.**: trace
     org.springframework: warn
 
 #Jwt oauth
