@@ -6,11 +6,11 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
-import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import pers.learn.common.exception.ApiException;
 
 import java.util.*;
 
@@ -59,7 +59,7 @@ public class JwtUtils {
         String token = JWT.create()
                 .withIssuer(ISSUER)
                 .withIssuedAt(new Date(currentTime))// 签发时间
-                .withExpiresAt(new Date(currentTime +getExpireTimeForReal()))// 过期时间戳
+                .withExpiresAt(new Date(currentTime + getExpireTimeForReal()))// 过期时间戳
                 .withClaim("username", username)//自定义参数
                 .sign(ALGORITHM);
 
@@ -67,45 +67,41 @@ public class JwtUtils {
     }
 
     /**
-     * 验证令牌
+     * 从令牌中获取用户名
+     *
+     * @param token 令牌
+     * @return 用户名
+     */
+    public static String getUsernameFromToken(String token) {
+        try {
+            //获得token中的信息无需secret解密也能获得
+            DecodedJWT jwt = JWT.decode(token);
+            return jwt.getClaim("username").asString();
+        } catch (JWTDecodeException e) {
+            return null;
+        }
+    }
+
+    /**
+     * 验证令牌，如果返回username，则代表验证通过，如果返回null代表验证不通过
      *
      * @param token
      * @return
      */
-//    private Boolean validateToken(String token) {
-//        // Reusable verifier instance
-//        JWTVerifier verifier = JWT.require(algorithm).withIssuer(issuer).build();
-//        DecodedJWT decodedJWT = verifier.verify(token);
-//        // verify issuer
-//        String issuer = decodedJWT.getIssuer();
-//        // verity 自定义参数
-//        String username = decodedJWT.getClaim("username").asString();
-//        if (("").equals(username)) {
-//            return false;
-//        }
-//        return true;
-//    }
-    public static Map<String, Object> validateToken(String token) {
-        Map<String, Object> principal = null;
-        JWTVerifier verifier = JWT.require(ALGORITHM)
-                .acceptExpiresAt(EXPIRE_TIME)
-                .build();
+    public static String validateToken(String token) throws ApiException {
+        JWTVerifier verifier = JWT.require(ALGORITHM).withIssuer(ISSUER).acceptExpiresAt(EXPIRE_TIME).build();
         try {
             DecodedJWT jwt = verifier.verify(token);
-            Claim claim = jwt.getClaim("username");
-            principal = claim.asMap();
+            return jwt.getClaim("username").asString();
         } catch (TokenExpiredException exception) {
             log.trace("token过期了: {}", exception.getClass().getName());
+            throw new ApiException("认证过期了，请重新登录");
         } catch (SignatureVerificationException exception) {
             log.trace("token错误: {}", exception.getClass().getName());
         } catch (JWTDecodeException exception) {
             log.trace("token解码错误: {}", exception.getClass().getName());
         }
-        return principal;
-    }
-
-    private Boolean isTokenExpired(String token) {
-        return false;
+        return null;
     }
 
 }
