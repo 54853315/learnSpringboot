@@ -88,14 +88,13 @@ public class JwtUtils {
      * @param token
      * @return
      */
-    public static String validateToken(String token) throws ApiException {
+    public static String validateToken(String token) {
         JWTVerifier verifier = JWT.require(ALGORITHM).withIssuer(ISSUER).acceptExpiresAt(EXPIRE_TIME).build();
         try {
             DecodedJWT jwt = verifier.verify(token);
             return jwt.getClaim("username").asString();
         } catch (TokenExpiredException exception) {
             log.trace("token过期了: {}", exception.getClass().getName());
-            throw new ApiException("认证过期了，请重新登录");
         } catch (SignatureVerificationException exception) {
             log.trace("token错误: {}", exception.getClass().getName());
         } catch (JWTDecodeException exception) {
