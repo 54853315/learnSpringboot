@@ -3,25 +3,16 @@ package pers.learn.web.controller;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
-import org.apache.shiro.authz.annotation.RequiresGuest;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import pers.learn.framework.shiro.token.BearerAuthenticationToken;
-import pers.learn.framework.shiro.token.JWTUsernamePasswordToken;
-import pers.learn.system.entity.BackendUser;
-import pers.learn.system.dto.BackendUserLoginBodyDto;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 import pers.learn.common.response.CommonResponse;
+import pers.learn.system.dto.BackendUserLoginBodyDto;
+import pers.learn.system.entity.BackendUser;
 import pers.learn.system.service.impl.BackendUserServiceImpl;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -31,10 +22,9 @@ public class BackendUserController {
     private BackendUserServiceImpl backendUserServiceImpl;
 
     @PostMapping(value = "/login")
-    @RequiresGuest
     public CommonResponse<Object> login(@RequestBody BackendUserLoginBodyDto requestBody) {
+
         UsernamePasswordToken token = new UsernamePasswordToken(requestBody.username, requestBody.password, requestBody.rememberMe);
-//        UsernamePasswordToken token = new BearerAuthenticationToken(requestBody.username, requestBody.password);
         Subject subject = SecurityUtils.getSubject();
 
         try {
@@ -75,6 +65,7 @@ public class BackendUserController {
     }
 
     @GetMapping(value = "/unauthorized")
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public CommonResponse<String> unauthorized() {
         return CommonResponse.fail("您没有权限");
     }

@@ -69,6 +69,7 @@ public class JWTAuthenticationFilter extends AccessControlFilter {
 
     @Override
     protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
+        // 前往admin/auth/notLogin接口进行json信息返回提示
         redirectToLogin(request, response);
         return false;
     }
