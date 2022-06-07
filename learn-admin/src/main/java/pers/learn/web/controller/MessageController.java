@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 // 整个Message功能都是基于springboot+mybatis实现
 @RestController
+@RequestMapping("/message")
 public class MessageController {
     @Autowired
     private MessageMapper messageMapper;
