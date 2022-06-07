@@ -6,13 +6,13 @@ import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
 import org.apache.shiro.authz.AuthorizationInfo;
-import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.springframework.beans.factory.annotation.Autowired;
+import pers.learn.common.constant.Auth;
 import pers.learn.framework.shiro.service.ShiroTokenService;
-import pers.learn.framework.shiro.token.UserBearerToken;
-import pers.learn.framework.shiro.token.UserUsernamePasswordToken;
+import pers.learn.framework.shiro.token.BearerToken;
+import pers.learn.framework.shiro.token.PasswordToken;
 import pers.learn.system.entity.User;
 import pers.learn.system.service.impl.UserServiceImpl;
 
@@ -23,18 +23,26 @@ public class UserRealm extends AuthorizingRealm {
     @Autowired
     private ShiroTokenService shiroTokenService;
 
+    @Override
+    public String getName() {
+        return Auth.USER;
+    }
+
     //    @Override
     public boolean supports(AuthenticationToken token) {
         // 同时支持用token和用户密码登录subject
-        if (token instanceof UserBearerToken || token instanceof UserUsernamePasswordToken) {
+        if (token instanceof BearerToken || token instanceof PasswordToken) {
             return true;
         }
         return false;
     }
 
     @Override
-    protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principalCollection) {
+    protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection pc) {
         return null;
+        // 校验当前用户类型是否正确，正确则进入处理角色权限问题，否则跳出
+        // 由于Realm的身份认证是全局通用的，在这里就必须做一下实体判断
+//        if (!pc.getRealmNames().contains(getName())) return null;
 //        SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();
 //        return info;
     }
@@ -48,7 +56,7 @@ public class UserRealm extends AuthorizingRealm {
                 .last("LIMIT 1");
         User user = userService.getOne(wrapper);
         if (user != null) {
-            if (authenticationToken instanceof UserUsernamePasswordToken) {
+            if (authenticationToken instanceof PasswordToken) {
                 return new SimpleAuthenticationInfo(user, user.getPassword(), getName());
             } else {
                 String accessToken = authenticationToken.getCredentials().toString();

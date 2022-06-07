@@ -4,19 +4,20 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.shiro.authc.AuthenticationToken;
 
-@Data
+
 @NoArgsConstructor
-public abstract class AbstractBearerToken implements AuthenticationToken {
-    private String username;
-    private String token;
+public abstract class AbstractToken implements AuthenticationToken {
+    protected String username;
+
+    public abstract String getLoginType();
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
     @Override
     public Object getPrincipal() {
         return username;
     }
 
-    @Override
-    public Object getCredentials() {
-        return token;
-    }
 }

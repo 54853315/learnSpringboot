@@ -7,9 +7,10 @@ import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.springframework.beans.factory.annotation.Autowired;
+import pers.learn.common.constant.Auth;
 import pers.learn.framework.shiro.service.ShiroTokenService;
-import pers.learn.framework.shiro.token.BackendUserBearerToken;
-import pers.learn.framework.shiro.token.BackendUserUsernamePasswordToken;
+import pers.learn.framework.shiro.token.BearerToken;
+import pers.learn.framework.shiro.token.PasswordToken;
 import pers.learn.system.entity.BackendUser;
 import pers.learn.system.entity.Permission;
 import pers.learn.system.entity.Role;
@@ -29,9 +30,14 @@ public class BackendUserRealm extends AuthorizingRealm {
     private ShiroTokenService shiroTokenService;
 
     @Override
+    public String getName() {
+        return Auth.BACKEND_USER;
+    }
+
+    @Override
     public boolean supports(AuthenticationToken token) {
         // 同时支持用token和用户密码登录subject
-        if (token instanceof BackendUserBearerToken || token instanceof BackendUserUsernamePasswordToken) {
+        if (token instanceof BearerToken || token instanceof PasswordToken) {
             return true;
         }
         return false;
@@ -41,26 +47,28 @@ public class BackendUserRealm extends AuthorizingRealm {
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection pc) {
         System.out.println("-------权限认证-------");
         SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();
-        if (pc.getPrimaryPrincipal() instanceof BackendUser) {  // 由于Realm的身份认证是全局通用的，在这里就必须做一下实体判断
-            BackendUser user = (BackendUser) pc.getPrimaryPrincipal();
-            Role role = backendUserServiceImpl.getRoleByUser(user);
-            // System.out.println("当前用户" + user);
-            // System.out.println("当前用户的Role数据:" + role);
-            // 设定Role
-            info.addRole(role.getSign());
-            if (role.isAdmin()) {
-                // 管理员拥有所有角色
-                info.addStringPermission("*:*:*");
-            } else {
-                // 设定Permissions
-                LambdaQueryWrapper<Permission> permissionWrapper = new LambdaQueryWrapper<Permission>();
-                List<Permission> permissionList = permissionMapper.selectList(permissionWrapper);
-                info.addStringPermissions(
-                        permissionList.parallelStream().map(Permission::getName).collect(Collectors.toList()));
-            }
-            System.out.println("Subject角色：" + info.getRoles());
-            System.out.println("Subject全部权限：" + info.getStringPermissions());
+        // 校验当前用户类型是否正确，正确则进入处理角色权限问题，否则跳出
+        // 由于Realm的身份认证是全局通用的，在这里就必须做一下实体判断
+        if (!pc.getRealmNames().contains(getName())) return null;
+        BackendUser user = (BackendUser) pc.getPrimaryPrincipal();
+        Role role = backendUserServiceImpl.getRoleByUser(user);
+        // System.out.println("当前用户" + user);
+        // System.out.println("当前用户的Role数据:" + role);
+        // 设定Role
+        info.addRole(role.getSign());
+        if (role.isAdmin()) {
+            // 管理员拥有所有角色
+            info.addStringPermission("*:*:*");
+        } else {
+            // 设定Permissions
+            LambdaQueryWrapper<Permission> permissionWrapper = new LambdaQueryWrapper<Permission>();
+            List<Permission> permissionList = permissionMapper.selectList(permissionWrapper);
+            info.addStringPermissions(
+                    permissionList.parallelStream().map(Permission::getName).collect(Collectors.toList()));
         }
+        System.out.println("Subject角色：" + info.getRoles());
+        System.out.println("Subject全部权限：" + info.getStringPermissions());
+
         return info;
     }
 
@@ -73,7 +81,7 @@ public class BackendUserRealm extends AuthorizingRealm {
                 .last("LIMIT 1");
         BackendUser backendUser = backendUserServiceImpl.getOne(wrapper);
         if (backendUser != null) {
-            if (authenticationToken instanceof BackendUserUsernamePasswordToken) {
+            if (authenticationToken instanceof PasswordToken) {
                 return new SimpleAuthenticationInfo(backendUser, backendUser.getPassword(), getName());
             } else {
                 String accessToken = authenticationToken.getCredentials().toString();

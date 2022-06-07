@@ -12,17 +12,14 @@ import pers.learn.common.exception.ApiException;
 import pers.learn.common.response.CommonResponse;
 import pers.learn.common.util.security.JwtUtils;
 import pers.learn.framework.shiro.service.ShiroTokenService;
-import pers.learn.framework.shiro.token.BackendUserUsernamePasswordToken;
-import pers.learn.framework.shiro.token.UserUsernamePasswordToken;
+import pers.learn.framework.shiro.token.BearerToken;
+import pers.learn.framework.shiro.token.PasswordToken;
 import pers.learn.system.dto.BackendUserLoginBodyDto;
 import pers.learn.system.dto.UserLoginBodyDto;
 import pers.learn.system.entity.BackendUser;
 import pers.learn.system.entity.User;
 import pers.learn.system.service.impl.BackendUserServiceImpl;
 import pers.learn.system.service.impl.UserServiceImpl;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 public class AuthController {
@@ -35,7 +32,7 @@ public class AuthController {
 
     @PostMapping(value = "/admin/auth/login")
     public CommonResponse<Object> backendUserLogin(@RequestBody BackendUserLoginBodyDto requestBody) {
-        BackendUserUsernamePasswordToken userToken = new BackendUserUsernamePasswordToken(requestBody.username, requestBody.password);
+        PasswordToken userToken = new PasswordToken(requestBody.username, requestBody.password, Auth.BACKEND_USER);
         String accessToken = this.authorization(userToken);
         // 当authorization中不返回token时，则用下面的写法
 //        BackendUser user = (BackendUser) SecurityUtils.getSubject().getPrincipal();
@@ -46,7 +43,7 @@ public class AuthController {
 
     @PostMapping("/user/auth/login")
     public CommonResponse<Object> userLogin(@RequestBody UserLoginBodyDto requestBody) {
-        UserUsernamePasswordToken userToken = new UserUsernamePasswordToken(requestBody.username, requestBody.password);
+        PasswordToken userToken = new PasswordToken(requestBody.username, requestBody.password, Auth.USER);
         String accessToken = this.authorization(userToken);
         // 当authorization中不返回token时，则用下面的写法
 //        User user = (User) SecurityUtils.getSubject().getPrincipal();
@@ -78,7 +75,7 @@ public class AuthController {
             shiroTokenService.saveToken(accessToken, backendUser);
         } else {
             User user = (User) principal;
-            accessToken = JwtUtils.generateToken(user.getName(),Auth.USER);
+            accessToken = JwtUtils.generateToken(user.getName(), Auth.USER);
             shiroTokenService.saveToken(accessToken, user);
         }
         return accessToken;

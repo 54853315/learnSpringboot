@@ -1,5 +1,6 @@
 package pers.learn.framework.shiro.util;
 
+import pers.learn.common.constant.Auth;
 import pers.learn.system.entity.BackendUser;
 
 import java.util.HashMap;
@@ -17,7 +18,7 @@ public class ShiroUtils {
     }
 
     public static String getCurUsername() {
-        return (String) threadLocal.get().get("username");
+        return (String) threadLocal.get().get(Auth.JWT_USERNAME);
     }
 
     public static Object getPrincipal() {
