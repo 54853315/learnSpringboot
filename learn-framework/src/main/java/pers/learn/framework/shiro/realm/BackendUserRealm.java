@@ -49,7 +49,8 @@ public class BackendUserRealm extends AuthorizingRealm {
         SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();
         // 校验当前用户类型是否正确，正确则进入处理角色权限问题，否则跳出
         // 由于Realm的身份认证是全局通用的，在这里就必须做一下实体判断
-        if (!pc.getRealmNames().contains(getName())) return null;
+        // 因为使用了CustomModularRealmAuthorizer 验证器，这里就不需要if了
+//        if (!pc.getRealmNames().contains(getName())) return null;
         BackendUser user = (BackendUser) pc.getPrimaryPrincipal();
         Role role = backendUserServiceImpl.getRoleByUser(user);
         // System.out.println("当前用户" + user);

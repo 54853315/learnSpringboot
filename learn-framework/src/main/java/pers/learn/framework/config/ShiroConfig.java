@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Configuration;
 import pers.learn.common.constant.Shiro;
 import pers.learn.framework.shiro.realm.BackendUserRealm;
 import pers.learn.framework.shiro.realm.CustomModularRealmAuthenticator;
+import pers.learn.framework.shiro.realm.CustomModularRealmAuthorizer;
 import pers.learn.framework.shiro.realm.UserRealm;
 import pers.learn.framework.shiro.web.oauth.JWTAuthenticationFilter;
 
@@ -115,6 +116,16 @@ public class ShiroConfig {
     }
 
     /**
+     * 针对多Realm，使用自定义授权验证器
+     * @return
+     */
+    @Bean
+    public CustomModularRealmAuthorizer modularRealmAuthorizer() {
+        CustomModularRealmAuthorizer authorizer = new CustomModularRealmAuthorizer();
+        return authorizer;
+    }
+
+    /**
      * 设置随springboot启动的安全管理器，交给spring管理
      *
      * @param backendUserRealm
@@ -124,8 +135,10 @@ public class ShiroConfig {
     @Bean(name = "securityManager")
     public DefaultWebSecurityManager getSecurityManager(@Qualifier("BackendUserRealm") BackendUserRealm backendUserRealm, @Qualifier("UserRealm") UserRealm userRealm) {
         DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
-        // 设置验证器为自定义验证器
+        // 设置身份认证为自定义验证器
         securityManager.setAuthenticator(modularRealmAuthenticator());
+        // 设置授权认证为自定义验证器
+        securityManager.setAuthorizer(modularRealmAuthorizer());
         // 设置Realms
         List<Realm> realms = new ArrayList<>(2);
         realms.add(userRealm);
@@ -168,11 +181,13 @@ public class ShiroConfig {
         aasa.setSecurityManager(getSecurityManager(backendUserRealm, userRealm));
         return aasa;
     }
+
     @Bean
     public BackendUserRealm BackendUserRealm(EhCacheManager cacheManager) {
         BackendUserRealm userRealm = new BackendUserRealm();
         // 在注册BearerAuthorizingRealm时设置采用EhCache缓存
         userRealm.setCacheManager(cacheManager);
+//        userRealm.setCredentialsMatcher(hashedCredentialsMatcher());//设置解密规则
         userRealm.setAuthorizationCacheName(Shiro.BACKEND_AUTH_CACHE);
         return userRealm;
     }
@@ -181,6 +196,7 @@ public class ShiroConfig {
     public UserRealm UserRealm(EhCacheManager cacheManager) {
         UserRealm userRealm = new UserRealm();
         userRealm.setCacheManager(cacheManager);
+//        userRealm.setCredentialsMatcher(hashedCredentialsMatcher());//设置解密规则
         userRealm.setAuthorizationCacheName(Shiro.FRONT_AUTH_CACHE);
         return userRealm;
     }
