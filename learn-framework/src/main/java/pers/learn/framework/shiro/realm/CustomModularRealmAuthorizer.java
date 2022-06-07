@@ -11,6 +11,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 
+/**
+ * 自定义授权验证器
+ * 判断claim中的endpoint与realm的名称是否一致，来下发isPermitted的执行，避免全realm的执行（Shiro默认是全Realm执行授权验证）
+ */
 public class CustomModularRealmAuthorizer extends ModularRealmAuthorizer {
     @Override
     public boolean isPermitted(PrincipalCollection principals, String permission) {

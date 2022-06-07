@@ -6,6 +6,7 @@ import java.util.List;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.modelmapper.ModelMapper;
 import pers.learn.common.constant.Query;
 import pers.learn.common.exception.ApiException;
@@ -50,14 +51,13 @@ public class ArticleController {
 
     /**
      * 抛出一个api异常，展示显示效果
-     * 
-     * @example:
-     *           {
-     *           "code": "422 UNPROCESSABLE_ENTITY",
-     *           "message": "haha",
-     *           "data": null,
-     *           "timestamp": "2022-05-12 12:38:32"
-     *           }
+     *
+     * @example: {
+     * "code": "422 UNPROCESSABLE_ENTITY",
+     * "message": "haha",
+     * "data": null,
+     * "timestamp": "2022-05-12 12:38:32"
+     * }
      */
     @GetMapping("/article/exception")
     public void throwExampleException() {
@@ -66,26 +66,25 @@ public class ArticleController {
 
     /**
      * 返回所有文章的概要信息
-     * 
-     * @example :
-     *          {
-     *          "code": "200 OK",
-     *          "message": "success",
-     *          "data": [{
-     *          "id": 2,
-     *          "title": "abc",
-     *          "author": "1",
-     *          "brief": "22"
-     *          }],
-     *          "timestamp": "2022-05-12 15:00:41"
-     *          }
+     *
      * @return List<Article>
+     * @example :
+     * {
+     * "code": "200 OK",
+     * "message": "success",
+     * "data": [{
+     * "id": 2,
+     * "title": "abc",
+     * "author": "1",
+     * "brief": "22"
+     * }],
+     * "timestamp": "2022-05-12 15:00:41"
+     * }
      */
-    @GetMapping("/article/allBrief")
-    @RequiresRoles("admin")
+    @GetMapping("/admin/article/allBrief")
     @RequiresPermissions("article:all")
     public CommonResponse<List<ArticleBriefVO>> allBrief() {
-        List<Article>  allBriefResult =  articleServiceImpl.allBrief();
+        List<Article> allBriefResult = articleServiceImpl.allBrief();//@TODO 有个报错需要修复
         List<ArticleBriefVO> articleBrief = new ArrayList<>();
         allBriefResult.forEach(item -> {
             // 类型转换老写法
@@ -104,11 +103,11 @@ public class ArticleController {
 
     /**
      * 查看文章列表
-     * 
-     * @return CommonResponse<IPage<Article>>
+     *
+     * @return CommonResponse<IPage < Article>>
      */
     @GetMapping("/articles")
-    @RequiresPermissions("article:list")
+//    @RequiresPermissions("article:list")
     public CommonResponse<IPage<Article>> list(
             @RequestParam(value = "page", required = false, defaultValue = Query.DEFAULT_PAGE) Integer page,
             @RequestParam(value = "per_page", required = false, defaultValue = Query.DEFAULT_PAGE_SIZE) Integer perPage) {
@@ -123,7 +122,7 @@ public class ArticleController {
 
     /**
      * 查看一个文章
-     * 
+     *
      * @param id
      * @return CommonResponse<Article>
      * @throws NotFoundException
@@ -136,31 +135,33 @@ public class ArticleController {
 
     /**
      * 新增一个文章
-     * 
-     * @example :
-     *          curl --location --request POST 'http://localhost:8080/article' \
-     *          --header 'Content-Type: application/json' \
-     *          --data-raw '{
-     *          "title": "各工构毛派",
-     *          "author": "nulla",
-     *          "brief": "labore culpa deserunt anim dolor",
-     *          "release_time": "2002-06-17 23:00:13"
-     *          }'
+     *
      * @param requestBody
      * @throws Exception
+     * @example :
+     * curl --location --request POST 'http://localhost:8080/article' \
+     * --header 'Content-Type: application/json' \
+     * --data-raw '{
+     * "title": "各工构毛派",
+     * "author": "nulla",
+     * "brief": "labore culpa deserunt anim dolor",
+     * "release_time": "2002-06-17 23:00:13"
+     * }'
      */
-    @PostMapping("/article")
+    @PostMapping("/admin/article")
+    @RequiresRoles("admin")
     public CommonResponse<Article> store(@RequestBody ArticleBodyDto requestBody) throws Exception {
         return CommonResponse.returnResult(articleServiceImpl.insertArticle(requestBody));
     }
 
     /**
      * 更新文章
-     * 
+     *
      * @param requestBody
      * @throws Exception
      */
-    @PutMapping("/article/{id}")
+    @PutMapping("/admin/article/{id}")
+    @RequiresRoles("admin")
     public CommonResponse<Article> update(@PathVariable("id") Long id, @RequestBody ArticleBodyDto requestBody)
             throws Exception {
         return CommonResponse.returnResult(articleServiceImpl.updateArticle(id, requestBody));
@@ -173,13 +174,13 @@ public class ArticleController {
      * issue：（请愿太多了）
      * via:
      * https://github.com/baomidou/mybatis-plus/blob/a3e121c27cd26cb7c546dfb88190f3b1f574dc38/mybatis-plus-core/src/main/java/com/baomidou/mybatisplus/core/injector/methods/DeleteById.java
-     * 
+     *
      * @param id
      * @return boolean
      */
-    @DeleteMapping("/article/{id}")
+    @DeleteMapping("/admin/article/{id}")
     @RequiresRoles("admin")
-    @RequiresPermissions(value = {"article_del","article:delete"},logical = Logical.OR)
+    @RequiresPermissions(value = {"article:del", "article:delete"}, logical = Logical.OR)
     @CacheEvict(value = "article", key = "#id", beforeInvocation = true)
     public CommonResponse<String> delete(@PathVariable("id") Long id) {
         if (articleServiceImpl.removeById(id)) {
@@ -193,7 +194,7 @@ public class ArticleController {
     @GetMapping(value = "/article/{article_id}/comment")
     /**
      * 文章评论列表
-     * 
+     *
      * @example
      *          "data": {
      *          "records": [
@@ -210,8 +211,9 @@ public class ArticleController {
      * @param articleId
      * @param page
      * @param perPage
-     * @return CommonResponse<IPage<ArticleComment>>
+     * @return CommonResponse<IPage < ArticleComment>>
      */
+    @RequiresAuthentication
     public CommonResponse<IPage<ArticleComment>> comments(
             @PathVariable("article_id") @NonNull Long articleId,
             @RequestParam(value = "page", required = false, defaultValue = Query.DEFAULT_PAGE) Integer page,

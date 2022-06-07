@@ -32,11 +32,9 @@ public class CustomModularRealmAuthenticator extends ModularRealmAuthenticator {
         AbstractToken token = (AbstractToken) authenticationToken;
 
         // 找到当前登录人的登录类型
-//        String loginType = token.getLoginType();
+        String loginType = token.getLoginType();
         for (Realm realm : realms) {
-//            if (realm.getName().toLowerCase().contains(loginType) && realm.supports(token)) {
-            // 这里只影响认证授权的Realm，所以不用做loginType的判断，没用
-            if (realm.supports(token)) {
+            if (realm.getName().toLowerCase().contains(loginType) && realm.supports(token)) {
                 uniqueRealm = realm;
                 break;
             }
