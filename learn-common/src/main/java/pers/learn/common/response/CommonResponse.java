@@ -3,9 +3,9 @@
  * @Date: 2022-05-11 15:06:24
  * @LastEditors: konakona konakona@crazyphper.com
  * @LastEditTime: 2022-05-25 16:58:34
- * @Description: 
- * 
- * Copyright (c) 2022 by konakona konakona@crazyphper.com, All Rights Reserved. 
+ * @Description:
+ *
+ * Copyright (c) 2022 by konakona konakona@crazyphper.com, All Rights Reserved.
  */
 package pers.learn.common.response;
 
@@ -13,6 +13,10 @@ import pers.learn.common.util.DateAdopter;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Data
 @NoArgsConstructor
@@ -26,27 +30,34 @@ public class CommonResponse<T> {
     /**
      * 返回的Code的状态类型，除了成功为0，其他与http code的想法实现一致
      */
-    public enum Type
-    {
-        /** 成功 */
+    public enum Type {
+        /**
+         * 成功
+         */
         SUCCESS(0),
-        /** 执行失败 */
+        /**
+         * 执行失败
+         */
         FAIL(422),
-        /** 禁止访问 */
+        /**
+         * 禁止访问
+         */
         UNAUTHORIZED(401),
-        /** 找不到 */
+        /**
+         * 找不到
+         */
         NOT_FOUND(404),
-        /** 错误 */
+        /**
+         * 错误
+         */
         ERROR(500);
         private final int value;
 
-        Type(int value)
-        {
+        Type(int value) {
             this.value = value;
         }
 
-        public int value()
-        {
+        public int value() {
             return this.value;
         }
     }
@@ -76,7 +87,7 @@ public class CommonResponse<T> {
 
     /**
      * 成功返回信息
-     * 
+     *
      * @param <T>
      * @param code
      * @param message
@@ -110,9 +121,33 @@ public class CommonResponse<T> {
         return fail(Type.ERROR, "fail");
     }
 
+    /**
+     * 返回成功，携带一大堆数据
+     *
+     * @param data
+     * @param <T>
+     * @return
+     */
     public static <T> CommonResponse<T> returnResult(T data) {
         CommonResponse<T> result = new CommonResponse<>(Type.SUCCESS, "success");
         result.setData(data);
+        return result;
+    }
+
+    /**
+     * 返回成功，携带一条kv数据
+     *
+     * @param key
+     * @param value
+     * @param <T>
+     * @return
+     */
+    @SuppressWarnings (value="unchecked")
+    public static <T> CommonResponse<T> returnResult(String key, String value) {
+        CommonResponse<T> result = new CommonResponse<>(Type.SUCCESS, "success");
+        Map<String, String> map = new HashMap<>();
+        map.put(key, value);
+        result.setData((T) map);
         return result;
     }
 }
