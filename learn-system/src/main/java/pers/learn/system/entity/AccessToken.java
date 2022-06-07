@@ -40,6 +40,9 @@ public class AccessToken implements Serializable {
     // 用户token
     private String accessToken;
 
+    // 端 admin(E:BackendUser)|api(E:User)
+    private String endpoint;
+
     //创建时间
     @NonNull
     @TableField(fill = FieldFill.INSERT)

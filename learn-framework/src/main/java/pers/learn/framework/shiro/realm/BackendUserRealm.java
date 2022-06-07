@@ -1,109 +1,99 @@
 package pers.learn.framework.shiro.realm;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
-
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
-
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.authc.AuthenticationException;
-import org.apache.shiro.authc.AuthenticationInfo;
-import org.apache.shiro.authc.AuthenticationToken;
-import org.apache.shiro.authc.SimpleAuthenticationInfo;
+import org.apache.shiro.authc.*;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
-import org.apache.shiro.subject.SimplePrincipalCollection;
-import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
-
+import pers.learn.framework.shiro.service.ShiroTokenService;
+import pers.learn.framework.shiro.token.BackendUserBearerToken;
+import pers.learn.framework.shiro.token.BackendUserUsernamePasswordToken;
 import pers.learn.system.entity.BackendUser;
 import pers.learn.system.entity.Permission;
 import pers.learn.system.entity.Role;
-import pers.learn.system.mapper.BackendUserMapper;
 import pers.learn.system.mapper.PermissionMapper;
-import pers.learn.system.service.BackendUserService;
 import pers.learn.system.service.impl.BackendUserServiceImpl;
 
-public class BackendUserRealm extends AuthorizingRealm {
+import java.util.List;
+import java.util.stream.Collectors;
 
+public class BackendUserRealm extends AuthorizingRealm {
     @Autowired
     private BackendUserServiceImpl backendUserServiceImpl;
     @Autowired
     private PermissionMapper permissionMapper;
 
+    @Autowired
+    private ShiroTokenService shiroTokenService;
+
     @Override
-    /**
-     * 控制角色权限
-     * 此方法调用 hasRole,hasPermission的时候才会进行回调.
-     * 权限信息.(授权):
-     * 1、如果用户正常退出，缓存自动清空；
-     * 2、如果用户非正常退出，缓存自动清空；
-     * 3、如果我们修改了用户的权限，而用户不退出系统，修改的权限无法立即生效。
-     * （需要手动编程进行实现；放在service进行调用）
-     * 在权限修改后调用realm中的方法，realm已经由spring管理，所以从spring中获取realm实例，调用clearCached方法
-     * 
-     * 当没有使用缓存的时候，不断刷新页面的话，请求权限判断时这个方法会不断执行。
-     * 
-     * @param {PrincipalCollection} pc
-     * @return AuthorizationInfo
-     */
+    public boolean supports(AuthenticationToken token) {
+        // 同时支持用token和用户密码登录subject
+        if (token instanceof BackendUserBearerToken || token instanceof BackendUserUsernamePasswordToken) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection pc) {
         System.out.println("-------权限认证-------");
         SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();
-        BackendUser user = (BackendUser) pc.getPrimaryPrincipal();
-        Role role = backendUserServiceImpl.getRoleByUser(user);
-        // System.out.println("当前用户" + user);
-        // System.out.println("当前用户的Role数据:" + role);
-        // 设定Role
-        info.addRole(role.getSign());
-        if (role.isAdmin()) {
-            // 管理员拥有所有角色
-            info.addStringPermission("*:*:*");
-        } else {
-            // 设定Permissions
-            LambdaQueryWrapper<Permission> permissionWrapper = new LambdaQueryWrapper<Permission>();
-            List<Permission> permissionList = permissionMapper.selectList(permissionWrapper);
-            info.addStringPermissions(
-                    permissionList.parallelStream().map(Permission::getName).collect(Collectors.toList()));
+        if (pc.getPrimaryPrincipal() instanceof BackendUser) {  // 由于Realm的身份认证是全局通用的，在这里就必须做一下实体判断
+            BackendUser user = (BackendUser) pc.getPrimaryPrincipal();
+            Role role = backendUserServiceImpl.getRoleByUser(user);
+            // System.out.println("当前用户" + user);
+            // System.out.println("当前用户的Role数据:" + role);
+            // 设定Role
+            info.addRole(role.getSign());
+            if (role.isAdmin()) {
+                // 管理员拥有所有角色
+                info.addStringPermission("*:*:*");
+            } else {
+                // 设定Permissions
+                LambdaQueryWrapper<Permission> permissionWrapper = new LambdaQueryWrapper<Permission>();
+                List<Permission> permissionList = permissionMapper.selectList(permissionWrapper);
+                info.addStringPermissions(
+                        permissionList.parallelStream().map(Permission::getName).collect(Collectors.toList()));
+            }
+            System.out.println("Subject角色：" + info.getRoles());
+            System.out.println("Subject全部权限：" + info.getStringPermissions());
         }
-        System.out.println("Subject角色：" + info.getRoles());
-        System.out.println("Subject全部权限：" + info.getStringPermissions());
         return info;
     }
 
-    // 控制登录
     @Override
-    protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
-        System.out.println("token" + token);
+    protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authenticationToken) throws AuthenticationException {
+        String username = (String) authenticationToken.getPrincipal();
+        // 获取用户信息
         LambdaQueryWrapper<BackendUser> wrapper = new LambdaQueryWrapper<BackendUser>()
-                .eq(BackendUser::getName, token.getPrincipal().toString())
+                .eq(BackendUser::getName, username)
                 .last("LIMIT 1");
         BackendUser backendUser = backendUserServiceImpl.getOne(wrapper);
         if (backendUser != null) {
-            // SimpleAuthenticationInfo中的password会跟AuthenticationToken中的credentials进行对比
-            AuthenticationInfo info = new SimpleAuthenticationInfo(backendUser, backendUser.getPassword(), getName());
-            return info;
+            if (authenticationToken instanceof BackendUserUsernamePasswordToken) {
+                return new SimpleAuthenticationInfo(backendUser, backendUser.getPassword(), getName());
+            } else {
+                String accessToken = authenticationToken.getCredentials().toString();
+                if (isTokenOnline(accessToken)) {
+                    // 用户已经登录过，拥有token，它用token访问Shiro时，Shiro不认识它、不记得它，所以我们写了一个Filter让有Authorization的访问再次触发本方法（doGetAuthorizationInfo）
+                    // 这时我们就需要返回用户实体信息，方便后续权限判断能够通过subject获得用户信息做更进一步的事情
+                    return new SimpleAuthenticationInfo(backendUser, authenticationToken.getCredentials(), getName());
+                }
+            }
         }
         return null;
     }
 
     /**
-     * 清理指定用户授权信息缓存
+     * 检测Token是否在数据库中，如果Token不在数据库中则代表用户被管理员手动离线或者ban了，总之不可用
+     *
+     * @param token
+     * @return
      */
-    public void clearCachedAuthorizationInfo(Object principal) {
-        SimplePrincipalCollection principals = new SimplePrincipalCollection(principal, getName());
-        this.clearCachedAuthorizationInfo(principals);
+    private Boolean isTokenOnline(String token) {
+        return shiroTokenService.findAccessToken(token) != null;
     }
-
-    /**
-     * 清理所有用户授权信息缓存
-     */
-    public void clearAllCachedAuthorizationInfo() {
-    }
-
 }

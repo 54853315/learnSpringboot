@@ -1,10 +1,13 @@
 package pers.learn.framework.config;
 
+import org.apache.shiro.authc.pam.AtLeastOneSuccessfulStrategy;
+import org.apache.shiro.authc.pam.ModularRealmAuthenticator;
 import org.apache.shiro.cache.ehcache.EhCacheManager;
 import org.apache.shiro.mgt.DefaultSessionStorageEvaluator;
 import org.apache.shiro.mgt.DefaultSubjectDAO;
 import org.apache.shiro.mgt.SessionStorageEvaluator;
 import org.apache.shiro.mgt.SubjectDAO;
+import org.apache.shiro.realm.Realm;
 import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
@@ -14,13 +17,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import pers.learn.common.constant.Shiro;
-import pers.learn.framework.shiro.realm.BearerAuthorizingRealm;
-import pers.learn.framework.shiro.web.token.JWTAuthenticationFilter;
+import pers.learn.framework.shiro.realm.BackendUserRealm;
+import pers.learn.framework.shiro.realm.CustomModularRealmAuthenticator;
+import pers.learn.framework.shiro.realm.UserRealm;
+import pers.learn.framework.shiro.web.oauth.JWTAuthenticationFilter;
 
 import javax.servlet.Filter;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 @Configuration
 public class ShiroConfig {
@@ -46,10 +49,10 @@ public class ShiroConfig {
         shiroFilterFactoryBean.setSecurityManager(securityManager);
         shiroFilterFactoryBean.setFilterChainDefinitionMap(getFilterChainDefinitionMap());
 
-        // 设置登录接口
-        shiroFilterFactoryBean.setLoginUrl("/admin/auth/notLogin");
-        // 未授权界面
-        shiroFilterFactoryBean.setUnauthorizedUrl("/admin/auth/unauthorized");
+        // 在oauth2.0 的情况下，需要设置未登录时的提示接口；如果是web session模式，则应该设置为登录页面的uri
+        shiroFilterFactoryBean.setLoginUrl("/notLogin");
+        // 在oauth2.0 的情况下，需要设置未授权时的提示接口；如果是web session模式，则应该设置为显示“您还没有登录呢”的403页面的uri
+        shiroFilterFactoryBean.setUnauthorizedUrl("/unauthorized");
 
         // 设置filters
         Map<String, Filter> filters = new HashMap<String, Filter>();
@@ -78,9 +81,10 @@ public class ShiroConfig {
         // filterChainDefinitionMap.put("/article/**", "roles[admin],perms[article:*]");
         // 一些公共接口允许访问
         filterChainDefinitionMap.put("/guest/**", "noSessionCreation,anon");
-        filterChainDefinitionMap.put("/admin/auth/unauthorized", "noSessionCreation,anon");
+        filterChainDefinitionMap.put("/unauthorized", "noSessionCreation,anon");
         filterChainDefinitionMap.put("/admin/auth/login", "noSessionCreation,anon");
-        filterChainDefinitionMap.put("/admin/auth/notLogin", "noSessionCreation,anon");
+        filterChainDefinitionMap.put("/user/auth/login", "noSessionCreation,anon");
+        filterChainDefinitionMap.put("/notLogin", "noSessionCreation,anon");
         // 其他所有资源都需要授权才能访问
         filterChainDefinitionMap.put("/**", "noSessionCreation,jwtAuth");
 
@@ -99,15 +103,35 @@ public class ShiroConfig {
     }
 
     /**
+     * 针对多Realm，使用自定义身份验证器
+     *
+     * @return
+     */
+    @Bean
+    public ModularRealmAuthenticator modularRealmAuthenticator() {
+        CustomModularRealmAuthenticator authenticator = new CustomModularRealmAuthenticator();
+        authenticator.setAuthenticationStrategy(new AtLeastOneSuccessfulStrategy());
+        return authenticator;
+    }
+
+    /**
      * 设置随springboot启动的安全管理器，交给spring管理
-     * @param oAuthRealm
+     *
+     * @param backendUserRealm
+     * @param userRealm
      * @return
      */
     @Bean(name = "securityManager")
-    public DefaultWebSecurityManager getSecurityManager(@Qualifier("BearerAuthorizingRealm") BearerAuthorizingRealm oAuthRealm) {
+    public DefaultWebSecurityManager getSecurityManager(@Qualifier("BackendUserRealm") BackendUserRealm backendUserRealm, @Qualifier("UserRealm") UserRealm userRealm) {
         DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
-        securityManager.setRealm(oAuthRealm);
-//        securityManager.setSubjectFactory(new StatelessDefaultSubjectFactory());    // 看看隐藏后还起作用不
+        // 设置验证器为自定义验证器
+        securityManager.setAuthenticator(modularRealmAuthenticator());
+        // 设置Realms
+        List<Realm> realms = new ArrayList<>(2);
+        realms.add(userRealm);
+        realms.add(backendUserRealm);
+        securityManager.setRealms(realms);
+        // 设置缓存器
         securityManager.setCacheManager(getEhCacheManager());
         SubjectDAO subjectDAO = securityManager.getSubjectDAO();
         if (subjectDAO instanceof DefaultSubjectDAO) {
@@ -139,18 +163,25 @@ public class ShiroConfig {
      * @return
      */
     @Bean
-    public AuthorizationAttributeSourceAdvisor getAuthorizationAttributeSourceAdvisor(BearerAuthorizingRealm userRealm) {
+    public AuthorizationAttributeSourceAdvisor getAuthorizationAttributeSourceAdvisor(BackendUserRealm backendUserRealm, UserRealm userRealm) {
         AuthorizationAttributeSourceAdvisor aasa = new AuthorizationAttributeSourceAdvisor();
-        aasa.setSecurityManager(getSecurityManager(userRealm));
+        aasa.setSecurityManager(getSecurityManager(backendUserRealm, userRealm));
         return aasa;
     }
-
     @Bean
-    public BearerAuthorizingRealm BearerAuthorizingRealm(EhCacheManager cacheManager) {
-        BearerAuthorizingRealm userRealm = new BearerAuthorizingRealm();
+    public BackendUserRealm BackendUserRealm(EhCacheManager cacheManager) {
+        BackendUserRealm userRealm = new BackendUserRealm();
         // 在注册BearerAuthorizingRealm时设置采用EhCache缓存
         userRealm.setCacheManager(cacheManager);
         userRealm.setAuthorizationCacheName(Shiro.BACKEND_AUTH_CACHE);
+        return userRealm;
+    }
+
+    @Bean
+    public UserRealm UserRealm(EhCacheManager cacheManager) {
+        UserRealm userRealm = new UserRealm();
+        userRealm.setCacheManager(cacheManager);
+        userRealm.setAuthorizationCacheName(Shiro.FRONT_AUTH_CACHE);
         return userRealm;
     }
 }

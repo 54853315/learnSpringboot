@@ -1,18 +1,23 @@
-package pers.learn.framework.shiro.web.token;
+package pers.learn.framework.shiro.web.oauth;
 
+import com.auth0.jwt.interfaces.Claim;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.web.filter.AccessControlFilter;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestMethod;
+import pers.learn.common.constant.Auth;
 import pers.learn.common.util.security.JwtUtils;
-import pers.learn.framework.shiro.token.BearerAuthenticationToken;
+import pers.learn.framework.shiro.token.BackendUserBearerToken;
+import pers.learn.framework.shiro.token.UserBearerToken;
 import pers.learn.framework.shiro.util.ShiroUtils;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Map;
 
 @Slf4j
 public class JWTAuthenticationFilter extends AccessControlFilter {
@@ -25,16 +30,26 @@ public class JWTAuthenticationFilter extends AccessControlFilter {
             return false;
         }
         // 从token里解析出用户名，这样Realm接收的token对象结构才一致
-        String usernameFromToken = JwtUtils.validateToken(token);
-        if (usernameFromToken == null) {   //如果为空，说明token验证失败, 在onAccessDenied中处理
+        Map<String, Claim> clamis = JwtUtils.validateToken(token);
+        if (clamis==null || clamis.get("username") == null || clamis.get("endpoint") == null) {   //如果为空，说明token验证失败, 在onAccessDenied中处理
             return false;
         }
-        BearerAuthenticationToken bearerAuthenticationToken = new BearerAuthenticationToken(usernameFromToken, token);
+
+//        String username = JwtUtils.validateToken(token);
+//        if (username == null) {
+//            return false;
+//        }
+
+        AuthenticationToken authenticationToken;
+        if (clamis.get("endpoint").asString().equals(Auth.BACKEND_USER)) {
+            authenticationToken = new BackendUserBearerToken(clamis.get("username").asString(), token);
+        } else {
+            authenticationToken = new UserBearerToken(clamis.get("username").asString(), token);
+//        authenticationToken = new UserBearerToken(username, token);
+        }
         try {
             //委托realm进行登录认证
-            getSubject(servletRequest, servletResponse).login(bearerAuthenticationToken);
-//            ShiroUtils.setPrincipal(usernameFromToken);
-//            System.out.println("当前的subject是：" + ShiroUtils.getPrincipal());
+            getSubject(servletRequest, servletResponse).login(authenticationToken);
             return true;
         } catch (Exception e) {
             return false;
@@ -43,7 +58,7 @@ public class JWTAuthenticationFilter extends AccessControlFilter {
     }
 
     // 借助login初始化subject
-    private void initSubject(BearerAuthenticationToken token) {
+    private void initSubject(BackendUserBearerToken token) {
         SecurityUtils.getSubject().login(token);
     }
 
@@ -69,7 +84,7 @@ public class JWTAuthenticationFilter extends AccessControlFilter {
 
     @Override
     protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
-        // 前往admin/auth/notLogin接口进行json信息返回提示
+        // 前往/notLogin接口进行json信息返回提示
         redirectToLogin(request, response);
         return false;
     }
