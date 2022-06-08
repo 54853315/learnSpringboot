@@ -13,6 +13,7 @@ import pers.learn.common.constant.Auth;
 import pers.learn.framework.shiro.service.ShiroTokenService;
 import pers.learn.framework.shiro.token.BearerToken;
 import pers.learn.framework.shiro.token.PasswordToken;
+import pers.learn.system.entity.BackendUser;
 import pers.learn.system.entity.User;
 import pers.learn.system.service.impl.UserServiceImpl;
 
@@ -78,5 +79,14 @@ public class UserRealm extends AuthorizingRealm {
      */
     private Boolean isTokenOnline(String token) {
         return shiroTokenService.findAccessToken(token) != null;
+    }
+
+    @Override
+    protected void clearCachedAuthenticationInfo(PrincipalCollection principals) {
+        if (principals.getRealmNames().contains(getName())) {
+            User user = (User) principals.getPrimaryPrincipal();
+            shiroTokenService.deleteTokenByUserId(user.getId(), Auth.USER);
+            super.clearCachedAuthenticationInfo(principals);
+        }
     }
 }

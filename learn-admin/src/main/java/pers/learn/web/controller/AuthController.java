@@ -103,7 +103,7 @@ public class AuthController {
         return CommonResponse.returnResult(user);
     }
 
-    @GetMapping(value = "/admin/auth/logout")
+    @GetMapping(value = {"/admin/auth/logout", "/auth/logout"})
     public CommonResponse<String> logout() {
         SecurityUtils.getSubject().logout();
         return CommonResponse.fail("成功退出");

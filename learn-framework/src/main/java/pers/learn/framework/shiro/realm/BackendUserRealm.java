@@ -1,6 +1,7 @@
 package pers.learn.framework.shiro.realm;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
@@ -104,5 +105,14 @@ public class BackendUserRealm extends AuthorizingRealm {
      */
     private Boolean isTokenOnline(String token) {
         return shiroTokenService.findAccessToken(token) != null;
+    }
+
+    @Override
+    protected void clearCachedAuthenticationInfo(PrincipalCollection principals) {
+        if (principals.getRealmNames().contains(getName())) {
+            BackendUser user = (BackendUser) principals.getPrimaryPrincipal();
+            shiroTokenService.deleteTokenByUserId(user.getId(), Auth.BACKEND_USER);
+            super.clearCachedAuthenticationInfo(principals);
+        }
     }
 }

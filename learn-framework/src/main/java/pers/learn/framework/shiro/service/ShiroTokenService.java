@@ -31,6 +31,13 @@ public class ShiroTokenService {
         accessTokenService.remove(wrapper);
     }
 
+    public void deleteTokenByUserId(Long userId, String endpoint) {
+        LambdaQueryWrapper<AccessToken> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(AccessToken::getUserId, userId);
+        wrapper.eq(AccessToken::getEndpoint, endpoint);
+        accessTokenService.remove(wrapper);
+    }
+
     public Object findUserByAccessToken(String token) {
         AccessToken accessToken = accessTokenService.selectByToken(token);
         if (accessToken != null) {
