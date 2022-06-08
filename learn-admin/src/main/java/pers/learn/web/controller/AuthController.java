@@ -16,6 +16,7 @@ import pers.learn.framework.shiro.token.BearerToken;
 import pers.learn.framework.shiro.token.PasswordToken;
 import pers.learn.system.dto.BackendUserLoginBodyDto;
 import pers.learn.system.dto.UserLoginBodyDto;
+import pers.learn.system.dto.UserRegisterBodyDto;
 import pers.learn.system.entity.BackendUser;
 import pers.learn.system.entity.User;
 import pers.learn.system.service.impl.BackendUserServiceImpl;
@@ -29,6 +30,12 @@ public class AuthController {
     private UserServiceImpl userService;
     @Autowired
     private ShiroTokenService shiroTokenService;
+
+    @PostMapping(value = "/user/auth/register")
+    public CommonResponse<String> userRegister(@RequestBody UserRegisterBodyDto requestBody) {
+        userService.register(requestBody);
+        return CommonResponse.success();
+    }
 
     @PostMapping(value = "/admin/auth/login")
     public CommonResponse<Object> backendUserLogin(@RequestBody BackendUserLoginBodyDto requestBody) {

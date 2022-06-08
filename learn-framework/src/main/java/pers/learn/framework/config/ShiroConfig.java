@@ -1,5 +1,6 @@
 package pers.learn.framework.config;
 
+import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.authc.pam.AtLeastOneSuccessfulStrategy;
 import org.apache.shiro.authc.pam.ModularRealmAuthenticator;
 import org.apache.shiro.cache.ehcache.EhCacheManager;
@@ -85,6 +86,7 @@ public class ShiroConfig {
         filterChainDefinitionMap.put("/unauthorized", "noSessionCreation,anon");
         filterChainDefinitionMap.put("/admin/auth/login", "noSessionCreation,anon");
         filterChainDefinitionMap.put("/user/auth/login", "noSessionCreation,anon");
+        filterChainDefinitionMap.put("/user/auth/register", "noSessionCreation,anon");
         filterChainDefinitionMap.put("/notLogin", "noSessionCreation,anon");
         // 其他所有资源都需要授权才能访问
         filterChainDefinitionMap.put("/**", "noSessionCreation,jwtAuth");
@@ -111,6 +113,8 @@ public class ShiroConfig {
     @Bean
     public ModularRealmAuthenticator modularRealmAuthenticator() {
         CustomModularRealmAuthenticator authenticator = new CustomModularRealmAuthenticator();
+        //如果一个(或多个)领域成功认证，则整个尝试都被视为成功。如果没有成功进行身份验证，则尝试将失败。
+        // @see https://shiro.apache.org/static/current/apidocs/org/apache/shiro/authc/pam/AtLeastOneSuccessfulStrategy.html
         authenticator.setAuthenticationStrategy(new AtLeastOneSuccessfulStrategy());
         return authenticator;
     }
@@ -182,12 +186,24 @@ public class ShiroConfig {
         return aasa;
     }
 
+    public HashedCredentialsMatcher getHashedCredentialsMatcher(){
+        HashedCredentialsMatcher matcher = new HashedCredentialsMatcher();
+        // 设置加密方式
+        matcher.setHashAlgorithmName("SHA-256");    // 还有:SHA1 SHA256 SHA512
+        // 未使用hex
+        matcher.setStoredCredentialsHexEncoded(false);
+        // 1024次哈希迭代
+        matcher.setHashIterations(1024);
+        return matcher;
+    }
+
     @Bean
     public BackendUserRealm BackendUserRealm(EhCacheManager cacheManager) {
         BackendUserRealm userRealm = new BackendUserRealm();
         // 在注册BearerAuthorizingRealm时设置采用EhCache缓存
         userRealm.setCacheManager(cacheManager);
-//        userRealm.setCredentialsMatcher(hashedCredentialsMatcher());//设置解密规则
+        // 默认的SimpleCredentialsMatcher 直接将AuthenticationToken 中的Credential内容进行相等性检测，这里改为使用hash slat加密
+        userRealm.setCredentialsMatcher(getHashedCredentialsMatcher());//设置解密规则
         userRealm.setAuthorizationCacheName(Shiro.BACKEND_AUTH_CACHE);
         return userRealm;
     }
@@ -196,7 +212,8 @@ public class ShiroConfig {
     public UserRealm UserRealm(EhCacheManager cacheManager) {
         UserRealm userRealm = new UserRealm();
         userRealm.setCacheManager(cacheManager);
-//        userRealm.setCredentialsMatcher(hashedCredentialsMatcher());//设置解密规则
+        // 默认的SimpleCredentialsMatcher 直接将AuthenticationToken 中的Credential内容进行相等性检测，这里改为使用hash slat加密
+        userRealm.setCredentialsMatcher(getHashedCredentialsMatcher());//设置解密规则
         userRealm.setAuthorizationCacheName(Shiro.FRONT_AUTH_CACHE);
         return userRealm;
     }

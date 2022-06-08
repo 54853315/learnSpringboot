@@ -8,11 +8,13 @@ import org.apache.shiro.authc.SimpleAuthenticationInfo;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
+import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import pers.learn.common.constant.Auth;
 import pers.learn.framework.shiro.service.ShiroTokenService;
 import pers.learn.framework.shiro.token.BearerToken;
 import pers.learn.framework.shiro.token.PasswordToken;
+import pers.learn.framework.shiro.util.ShiroUtils;
 import pers.learn.system.entity.BackendUser;
 import pers.learn.system.entity.User;
 import pers.learn.system.service.impl.UserServiceImpl;
@@ -58,7 +60,9 @@ public class UserRealm extends AuthorizingRealm {
         User user = userService.getOne(wrapper);
         if (user != null) {
             if (authenticationToken instanceof PasswordToken) {
-                return new SimpleAuthenticationInfo(user, user.getPassword(), getName());
+                // debug技巧：如果前台提示密码不正确，去HashedCredentialsMatcher 中断点 doCredentialsMatch()
+                // doCredentialsMatch() 第一行,将用户输入的明文密码根据配置里的加密规则和数据库里的盐值进行加密
+                return new SimpleAuthenticationInfo(user, user.getPassword(), ByteSource.Util.bytes(user.getSalt()), getName());
             } else {
                 String accessToken = authenticationToken.getCredentials().toString();
                 if (isTokenOnline(accessToken)) {

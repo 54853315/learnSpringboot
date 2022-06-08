@@ -29,6 +29,8 @@ public class User extends Model<User> {
     private String name, email;
     @JsonIgnore
     private String password;
+    @JsonIgnore
+    private String salt;
 
     @NonNull
     @TableField(fill = FieldFill.INSERT)

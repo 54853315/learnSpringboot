@@ -37,6 +37,8 @@ public class BackendUser extends Model<BackendUser> {
     private String name, email;
     @JsonIgnore
     private String password;
+    @JsonIgnore
+    private String salt;
 
     @Column(columnDefinition = "int default 0", nullable = false)
     private Long roleId;
