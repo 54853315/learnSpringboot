@@ -7,6 +7,7 @@ import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
+import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import pers.learn.common.constant.Auth;
 import pers.learn.framework.shiro.service.ShiroTokenService;
@@ -84,7 +85,7 @@ public class BackendUserRealm extends AuthorizingRealm {
         BackendUser backendUser = backendUserServiceImpl.getOne(wrapper);
         if (backendUser != null) {
             if (authenticationToken instanceof PasswordToken) {
-                return new SimpleAuthenticationInfo(backendUser, backendUser.getPassword(), getName());
+                return new SimpleAuthenticationInfo(backendUser, backendUser.getPassword(), ByteSource.Util.bytes(backendUser.getSalt()), getName());
             } else {
                 String accessToken = authenticationToken.getCredentials().toString();
                 if (isTokenOnline(accessToken)) {

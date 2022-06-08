@@ -35,7 +35,7 @@ public class CipherUtils {
     }
 
     /**
-     * 生成随机salt
+     * 生成随机salt和密码密钥
      *
      * @param plainTextPassword
      * @return
