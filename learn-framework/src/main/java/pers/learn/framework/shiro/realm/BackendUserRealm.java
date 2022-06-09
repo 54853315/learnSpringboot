@@ -3,6 +3,7 @@ package pers.learn.framework.shiro.realm;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
+import org.apache.shiro.authc.credential.SimpleCredentialsMatcher;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
@@ -89,6 +90,8 @@ public class BackendUserRealm extends AuthorizingRealm {
             } else {
                 String accessToken = authenticationToken.getCredentials().toString();
                 if (isTokenOnline(accessToken)) {
+                    // 设置bearer token只需要普通的身份验证，不需要解密
+                    setCredentialsMatcher(new SimpleCredentialsMatcher());
                     // 用户已经登录过，拥有token，它用token访问Shiro时，Shiro不认识它、不记得它，所以我们写了一个Filter让有Authorization的访问再次触发本方法（doGetAuthorizationInfo）
                     // 这时我们就需要返回用户实体信息，方便后续权限判断能够通过subject获得用户信息做更进一步的事情
                     return new SimpleAuthenticationInfo(backendUser, authenticationToken.getCredentials(), getName());
