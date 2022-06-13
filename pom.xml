@@ -25,8 +25,18 @@
         </profile>
     </profiles>
     <properties>
+        <learn.version>0.0.1</learn.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>11</java.version>
+        <shiro.version>1.9.0</shiro.version>
+        <fastjson.version>1.2.83</fastjson.version>
+        <mybatis-plus-boot-starter.version>3.5.1</mybatis-plus-boot-starter.version>
+        <modelmapper.version>3.0.0</modelmapper.version>
+        <springboot.version>2.6.7</springboot.version>
+        <lombok.version>1.18.24</lombok.version>
+        <java-jwt.version>3.19.2</java-jwt.version>
+        <p6spy.version>3.9.1</p6spy.version>
+        <mysql-connector-java.version>8.0.29</mysql-connector-java.version>
     </properties>
     <!-- 依赖声明 -->
     <dependencyManagement>
@@ -71,64 +81,64 @@
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-data-redis</artifactId>
-                <version>2.6.7</version>
+                <version>${springboot.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-aop</artifactId>
-                <version>2.6.7</version>
+                <version>${springboot.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-data-jpa</artifactId>
-                <version>2.6.7</version>
+                <version>${springboot.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-validation</artifactId>
-                <version>2.6.7</version>
+                <version>${springboot.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
-                <version>1.18.24</version>
+                <version>${lombok.version}</version>
                 <scope>provided</scope>
             </dependency>
 
             <dependency>
                 <groupId>com.auth0</groupId>
                 <artifactId>java-jwt</artifactId>
-                <version>3.19.2</version>
+                <version>${java-jwt.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.shiro</groupId>
                 <artifactId>shiro-spring</artifactId>
-                <version>1.9.0</version>
+                <version>${shiro.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.shiro</groupId>
                 <artifactId>shiro-core</artifactId>
-                <version>1.9.0</version>
+                <version>${shiro.version}</version>
                 <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.shiro</groupId>
+                <artifactId>shiro-ehcache</artifactId>
+                <version>${shiro.version}</version>
             </dependency>
 
             <!-- 阿里JSON解析器 -->
             <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>fastjson</artifactId>
-                <version>1.2.83</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.shiro</groupId>
-                <artifactId>shiro-ehcache</artifactId>
-                <version>1.9.0</version>
+                <version>${fastjson.version}</version>
             </dependency>
 
             <!--			<dependency>-->
@@ -140,19 +150,19 @@
             <dependency>
                 <groupId>com.baomidou</groupId>
                 <artifactId>mybatis-plus-boot-starter</artifactId>
-                <version>3.5.1</version>
+                <version>${mybatis-plus-boot-starter.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.modelmapper</groupId>
                 <artifactId>modelmapper</artifactId>
-                <version>3.0.0</version>
+                <version>${modelmapper.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>p6spy</groupId>
                 <artifactId>p6spy</artifactId>
-                <version>3.9.1</version>
+                <version>${p6spy.version}</version>
             </dependency>
 
             <dependency>
@@ -164,7 +174,7 @@
             <dependency>
                 <groupId>mysql</groupId>
                 <artifactId>mysql-connector-java</artifactId>
-                <version>8.0.29</version>
+                <version>${mysql-connector-java.version}</version>
                 <scope>runtime</scope>
             </dependency>
             <!-- <dependency>
@@ -177,21 +187,21 @@
             <dependency>
                 <groupId>pers.learn</groupId>
                 <artifactId>learn-framework</artifactId>
-                <version>0.0.1</version>
+                <version>${learn.version}</version>
             </dependency>
 
             <!-- 系统模块-->
             <dependency>
                 <groupId>pers.learn</groupId>
                 <artifactId>learn-system</artifactId>
-                <version>0.0.1</version>
+                <version>${learn.version}</version>
             </dependency>
 
             <!-- 通用工具-->
             <dependency>
                 <groupId>pers.learn</groupId>
                 <artifactId>learn-common</artifactId>
-                <version>0.0.1</version>
+                <version>${learn.version}</version>
             </dependency>
 
         </dependencies>
