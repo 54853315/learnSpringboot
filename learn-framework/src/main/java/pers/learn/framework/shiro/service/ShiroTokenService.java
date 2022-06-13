@@ -66,8 +66,6 @@ public class ShiroTokenService {
         AccessToken obj = new AccessToken();
         obj.setUserId(userId).setLoginName(username).setAccessToken(token).setExpireTime(JwtUtils.getExpireTimeForReal()).setEndpoint(endpoint);
 
-        // @TODO 等恢复了数据源factory后，下面的时间设定可以取消
-        obj.setCreateTime(LocalDateTime.now()).setLastAccessTime(LocalDateTime.now());
         LambdaQueryWrapper<AccessToken> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(AccessToken::getUserId, userId);
         accessTokenService.saveOrUpdate(obj, wrapper);
