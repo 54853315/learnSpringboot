@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -26,6 +27,7 @@ import pers.learn.system.service.impl.BackendUserServiceImpl;
  * 后端用户Realm领域
  * Session版
  */
+@Slf4j
 public class BackendUserDbSessionRealm extends AuthorizingRealm {
 
     @Autowired
@@ -43,19 +45,17 @@ public class BackendUserDbSessionRealm extends AuthorizingRealm {
      * 3、如果我们修改了用户的权限，而用户不退出系统，修改的权限无法立即生效。
      * （需要手动编程进行实现；放在service进行调用）
      * 在权限修改后调用realm中的方法，realm已经由spring管理，所以从spring中获取realm实例，调用clearCached方法
-     * 
+     *
      * 当没有使用缓存的时候，不断刷新页面的话，请求权限判断时这个方法会不断执行。
-     * 
+     *
      * @param {PrincipalCollection} pc
      * @return AuthorizationInfo
      */
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection pc) {
-        System.out.println("-------权限认证-------");
         SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();
         BackendUser user = (BackendUser) pc.getPrimaryPrincipal();
         Role role = backendUserServiceImpl.getRoleByUser(user);
-        // System.out.println("当前用户" + user);
-        // System.out.println("当前用户的Role数据:" + role);
+        log.trace(String.format("当前用户[%s]，Role为[%s]", user, role));
         // 设定Role
         info.addRole(role.getSign());
         if (role.isAdmin()) {
@@ -68,8 +68,7 @@ public class BackendUserDbSessionRealm extends AuthorizingRealm {
             info.addStringPermissions(
                     permissionList.parallelStream().map(Permission::getName).collect(Collectors.toList()));
         }
-        System.out.println("Subject角色：" + info.getRoles());
-        System.out.println("Subject全部权限：" + info.getStringPermissions());
+        log.trace(String.format("Subject角色[%s] Subject全部权限[%s]", info.getRoles(), info.getStringPermissions()));
         return info;
     }
 

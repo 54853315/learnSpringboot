@@ -1,8 +1,11 @@
 package pers.learn.framework.shiro.realm;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.authc.*;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.AuthenticationInfo;
+import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.authc.SimpleAuthenticationInfo;
 import org.apache.shiro.authc.credential.SimpleCredentialsMatcher;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
@@ -23,6 +26,7 @@ import pers.learn.system.service.impl.BackendUserServiceImpl;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class BackendUserRealm extends AuthorizingRealm {
     @Autowired
     private BackendUserServiceImpl backendUserServiceImpl;
@@ -56,8 +60,7 @@ public class BackendUserRealm extends AuthorizingRealm {
 //        if (!pc.getRealmNames().contains(getName())) return null;
         BackendUser user = (BackendUser) pc.getPrimaryPrincipal();
         Role role = backendUserServiceImpl.getRoleByUser(user);
-        // System.out.println("当前用户" + user);
-        // System.out.println("当前用户的Role数据:" + role);
+        log.info("当前用户 {}，Role为 {}", user, role);
         // 设定Role
         info.addRole(role.getSign());
         if (role.isAdmin()) {
@@ -70,8 +73,7 @@ public class BackendUserRealm extends AuthorizingRealm {
             info.addStringPermissions(
                     permissionList.parallelStream().map(Permission::getName).collect(Collectors.toList()));
         }
-        System.out.println("Subject角色：" + info.getRoles());
-        System.out.println("Subject全部权限：" + info.getStringPermissions());
+        log.trace("Subject角色 {} Subject全部权限 {} ", info.getRoles(), info.getStringPermissions());
 
         return info;
     }
