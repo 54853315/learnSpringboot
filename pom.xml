@@ -8,6 +8,8 @@
     <version>0.0.1</version>
     <name>learn</name>
     <description>阿巴阿巴</description>
+    <inceptionYear>2022</inceptionYear>
+    <packaging>pom</packaging>
     <!-- 环境描述 -->
     <profiles>
         <profile>
@@ -213,8 +215,6 @@
         <module>learn-system</module>
         <module>learn-common</module>
     </modules>
-
-    <packaging>pom</packaging>
 
     <build>
         <!--		<resources>-->
