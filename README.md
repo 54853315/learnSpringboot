@@ -7,6 +7,7 @@
 - JAVA EE 11
 - Apache Maven3
 - Mysql 5.7
+- Redis
 
 2. 主框架
 
@@ -19,21 +20,26 @@
 - Apache Mybatis 2.2.2
 - Mybatis Plus 3.5.1
 - Hibernate
+- RedisTemplate
+
+4. 日志层
+- Log4j2
 
 
-# 演示功能代码
+# 功能代码
 
-> 目前都是不完整的功能，演示各种特性和包的使用之用。
+> 演示各种特性和包的使用，集成了Mysql/Redis/Cache/Lombok/Hibernate/MybatisPlus/Log4j2/Shiro/Jwt组件与服务。
 
-> 可结合我的Notion学习笔记一起理解这套程序的运行技巧。
+> 可结合我的Notion学习笔记一起理解这套程序的运行技巧（非必需）。
 
-- [x] [多端用户授权登录、权限判断](AuthController.java)
+- [x] [多端用户授权登录、权限判断](/learn-admin/src/main/java/pers/learn/web/controller/AuthController.java)
     - 使用Shiro+JWT实现oauth的加密注册，授权登录和角色权限验证
-- [x] [文章管理](ArticleController.java)
+    - 主功能是access token进行身份认证，ShiroConfig.java禁用了session；若需要了解Shiro Session存放到Db中实现session持久化的做法见这份[Config](/learn-framework/src/main/java/pers/learn/framework/config/ShiroConfiguration__session-version.java)
+- [x] [文章管理](/learn-admin/src/main/java/pers/learn/web/controller/ArticleController.java)
     - 基于springboot+mybatis plus（CURD+乐观锁+全局元数据处理器+分页service） + hibernate（用于自动构建article数据表）实现
-- [x] [留言管理](MessageController.java)
+- [x] [留言管理](/learn-admin/src/main/java/pers/learn/web/controller/MessageController.java)
     - 基于springboot+mybatis实现
-- [x] [多数据源](DataSourceConfig.java)
+- [x] [多数据源](/learn-framework/src/main/java/pers/learn/framework/config/DataSourceConfig.java)
 
 关于项目目录说明：
 ```
@@ -44,8 +50,6 @@
 ├── learn-system     业务核心
 
 ```
-
-
 
 其他说明：
 
