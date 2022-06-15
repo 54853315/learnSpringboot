@@ -11,9 +11,9 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import pers.learn.common.exception.ApiException;
 
-import java.util.*;
+import java.util.Date;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -48,19 +48,21 @@ public class JwtUtils {
 
     /**
      * 从数据声明生成令牌
+     *
      * @param username
      * @param endpoint
      * @return
      */
     public static String generateToken(String username, String endpoint) {
         long currentTime = System.currentTimeMillis();
-        log.info("=====generateToken===now    is " + new Date(currentTime));
-        log.info("=====generateToken===expire is " + new Date(currentTime + getExpireTimeForReal()));
+        Date issueDate = new Date(currentTime);
+        Date expiresDate = new Date(currentTime + getExpireTimeForReal());
+        log.info("生成的oauth token {}，在 {} 过期", issueDate, expiresDate);
 
         String token = JWT.create()
                 .withIssuer(ISSUER)
-                .withIssuedAt(new Date(currentTime))// 签发时间
-                .withExpiresAt(new Date(currentTime + getExpireTimeForReal()))// 过期时间戳
+                .withIssuedAt(issueDate)// 签发时间
+                .withExpiresAt(expiresDate)// 过期时间戳
                 .withClaim("username", username)//自定义参数
                 .withClaim("endpoint", endpoint)
                 .sign(ALGORITHM);
@@ -106,5 +108,4 @@ public class JwtUtils {
         }
         return null;
     }
-
 }
